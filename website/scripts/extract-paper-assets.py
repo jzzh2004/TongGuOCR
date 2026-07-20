@@ -19,7 +19,7 @@ ASSETS = {
     "figures/figure-1.webp": (2, (39, 54, 556, 524), "WEBP"),
     "figures/figure-2.png": (5, (58, 55, 538, 350), "PNG"),
     "figures/figure-3.png": (7, (58, 54, 538, 334), "PNG"),
-    "figures/figure-4.webp": (15, (42, 72, 553, 631), "WEBP"),
+    "figures/figure-4.webp": (15, (42, 72, 553, 700), "WEBP"),
     "tables/table-1.png": (9, (64, 67, 532, 151), "PNG"),
     "tables/table-2.png": (11, (64, 68, 532, 191), "PNG"),
     "tables/table-3.png": (12, (72, 67, 524, 505), "PNG"),

@@ -97,7 +97,7 @@ function Lightbox({ asset, onClose }: { asset: VisualAsset; onClose: () => void 
   }, [onClose]);
 
   return (
-    <div className="lightbox" role="dialog" aria-modal="true" aria-label={`${asset.label} full-resolution viewer`} onMouseDown={(event) => {
+    <div className={`lightbox ${asset.id.startsWith("table-") ? "lightbox--table" : ""}`} role="dialog" aria-modal="true" aria-label={`${asset.label} full-resolution viewer`} onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose();
     }}>
       <div className="lightbox__topbar">

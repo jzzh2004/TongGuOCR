@@ -2060,3 +2060,22 @@ footer {
     gap: 1.8rem;
   }
 }
+
+/* Let the paper tables sit directly on the site's warm paper tone. */
+.visual-card--table .visual-card__button,
+.visual-card--main-table .visual-card__button,
+.ablation-panel .visual-card__button {
+  background: var(--paper);
+}
+
+.visual-card--table .visual-card__button img {
+  mix-blend-mode: multiply;
+}
+
+.lightbox--table .lightbox__stage {
+  background: var(--paper);
+}
+
+.lightbox--table .lightbox__stage img {
+  mix-blend-mode: multiply;
+}
