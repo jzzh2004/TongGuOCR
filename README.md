@@ -43,23 +43,6 @@ TongGuOCR achieves state-of-the-art performance on two Chinese historical docume
 
 On the more challenging M5HisDoc benchmark, TongGuOCR reduces NED from 10.43 to 6.15 and RO-ED from 7.53 to 3.49 relative to the best competing score for each metric. See the [paper](https://arxiv.org/abs/2608.07917) and [project page](https://jzzh2004.github.io/TongGuOCR) for full comparisons, ablations, and qualitative results.
 
-## Project Website
-
-The website is built with React, TypeScript, and Vite.
-
-```bash
-cd website
-npm install
-npm run dev
-```
-
-Useful commands:
-
-```bash
-npm run build
-npm test
-```
-
 ## Citation
 
 If you find TongGuOCR useful in your research, please cite our paper:
@@ -72,7 +55,3 @@ If you find TongGuOCR useful in your research, please cite our paper:
   year    = {2026}
 }
 ```
-
-## Acknowledgements
-
-TongGuOCR is developed at the South China University of Technology with collaborators from Huawei Technologies Co., Ltd. We thank the creators and maintainers of the datasets and open-source systems used in this work.

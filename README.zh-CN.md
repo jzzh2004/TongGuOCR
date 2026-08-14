@@ -43,23 +43,6 @@ TongGuOCR 在两个中文历史文献 OCR 基准上取得了当前最佳性能�
 
 在更具挑战性的 M5HisDoc 基准上，相较各指标最优的竞争方法，TongGuOCR 将 NED 从 10.43 降低至 6.15，并将 RO-ED 从 7.53 降低至 3.49。完整对比实验、消融研究与定性结果请参阅[论文](https://arxiv.org/abs/2608.07917)和[项目主页](https://jzzh2004.github.io/TongGuOCR)。
 
-## 项目网站
-
-项目网站使用 React、TypeScript 和 Vite 构建。
-
-```bash
-cd website
-npm install
-npm run dev
-```
-
-其他常用命令：
-
-```bash
-npm run build
-npm test
-```
-
 ## 引用
 
 如果 TongGuOCR 对你的研究有所帮助，请引用我们的论文：
@@ -72,7 +55,3 @@ npm test
   year    = {2026}
 }
 ```
-
-## 致谢
-
-TongGuOCR 由华南理工大学与华为技术有限公司的合作团队共同研发。感谢本研究所使用数据集与开源系统的创建者和维护者。
