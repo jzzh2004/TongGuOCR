@@ -22,7 +22,7 @@ test("includes every paper figure and table exactly once in content data", async
 });
 
 test("keeps project links centrally configurable", () => {
-  assert.match(content, /label: "Paper", url: null/);
+  assert.match(content, /label: "Paper", url: "https:\/\/arxiv\.org\/abs\/2608\.07917"/);
   assert.match(content, /label: "Demo", url: "http:\/\/121\.41\.49\.212:6767\/"/);
   assert.match(content, /label: "GitHub", url: "https:\/\/github\.com\/jzzh2004\/TongGuOCR"/);
   assert.match(content, /label: "Hugging Face", url: null/);
@@ -31,7 +31,7 @@ test("keeps project links centrally configurable", () => {
   assert.match(app, /target="_blank" rel="noreferrer noopener"/);
 });
 
-test("preserves the complete seven-author paper byline", () => {
+test("preserves the complete nine-author paper byline", () => {
   const expectedAuthors = [
     "Zhongheng Zhou",
     "Yi Sun",
@@ -39,10 +39,12 @@ test("preserves the complete seven-author paper byline", () => {
     "Yuyi Zhang",
     "Peirong Zhang",
     "Yulin Fang",
+    "Dezhi Peng",
+    "Minghui Liao",
     "Lianwen Jin",
   ];
   for (const author of expectedAuthors) assert.match(content, new RegExp(`name: \\"${author}\\"`));
-  assert.equal((content.match(/name: "/g) ?? []).length, 7);
+  assert.equal((content.match(/name: "/g) ?? []).length, 9);
 });
 
 test("publishes paper metadata in the production HTML", () => {

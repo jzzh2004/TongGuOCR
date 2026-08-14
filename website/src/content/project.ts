@@ -18,7 +18,7 @@ export type VisualAsset = {
 export const project = {
   title: "TongGuOCR",
   subtitle: "A Layout-Aware and Token-Augmented OCR Framework for Chinese Historical Documents",
-  institution: "South China University of Technology · Guangzhou, China",
+  institution: "South China University of Technology · Huawei Technologies Co., Ltd.",
   authors: [
     { name: "Zhongheng Zhou", marks: "†" },
     { name: "Yi Sun", marks: "†" },
@@ -26,11 +26,13 @@ export const project = {
     { name: "Yuyi Zhang", marks: "" },
     { name: "Peirong Zhang", marks: "" },
     { name: "Yulin Fang", marks: "" },
+    { name: "Dezhi Peng", marks: "" },
+    { name: "Minghui Liao", marks: "" },
     { name: "Lianwen Jin", marks: "*" },
   ],
   authorNote: "* Corresponding authors · † Equal contribution",
   links: [
-    { label: "Paper", url: null, meta: "Coming soon" },
+    { label: "Paper", url: "https://arxiv.org/abs/2608.07917", meta: "arXiv" },
     { label: "Demo", url: "http://121.41.49.212:6767/", meta: "Open demo" },
     { label: "GitHub", url: "https://github.com/jzzh2004/TongGuOCR", meta: "Source code" },
     { label: "Hugging Face", url: null, meta: "Coming soon" },
