@@ -33,7 +33,7 @@ export const project = {
   authorNote: "* Corresponding authors · † Equal contribution",
   links: [
     { label: "Paper", url: "https://arxiv.org/abs/2608.07917", meta: "arXiv" },
-    { label: "Demo", url: "http://121.41.49.212:6767/", meta: "Open demo" },
+    { label: "Demo", url: "https://guji-ocr.com", meta: "Open demo" },
     { label: "GitHub", url: "https://github.com/jzzh2004/TongGuOCR", meta: "Source code" },
     { label: "Hugging Face", url: null, meta: "Coming soon" },
   ] satisfies ProjectLink[],

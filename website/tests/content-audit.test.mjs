@@ -23,7 +23,7 @@ test("includes every paper figure and table exactly once in content data", async
 
 test("keeps project links centrally configurable", () => {
   assert.match(content, /label: "Paper", url: "https:\/\/arxiv\.org\/abs\/2608\.07917"/);
-  assert.match(content, /label: "Demo", url: "http:\/\/121\.41\.49\.212:6767\/"/);
+  assert.match(content, /label: "Demo", url: "https:\/\/guji-ocr\.com"/);
   assert.match(content, /label: "GitHub", url: "https:\/\/github\.com\/jzzh2004\/TongGuOCR"/);
   assert.match(content, /label: "Hugging Face", url: null/);
   assert.doesNotMatch(app, /disabled title=/);

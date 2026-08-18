@@ -7,7 +7,7 @@
 
   [Paper](https://arxiv.org/abs/2608.07917) ·
   [Project Page](https://jzzh2004.github.io/TongGuOCR) ·
-  [Online Demo](http://121.41.49.212:6767/)
+  [Online Demo](https://guji-ocr.com)
 
   English · [简体中文](README.zh-CN.md)
 </div>

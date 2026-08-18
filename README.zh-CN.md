@@ -7,7 +7,7 @@
 
   [论文](https://arxiv.org/abs/2608.07917) ·
   [项目主页](https://jzzh2004.github.io/TongGuOCR) ·
-  [在线演示](http://121.41.49.212:6767/)
+  [在线演示](https://guji-ocr.com)
 
   [English](README.md) · 简体中文
 </div>
