@@ -1,0 +1,28 @@
+# Python dependencies for the RO-ED reading-order evaluation
+# (evaluation/ro_ed + vendored OmniDocBench scorer at evaluation/third_party/OmniDocBench).
+#
+# The first block pins the protocol/scoring environment of the paper's
+# archived RO-ED runs (python 3.10, no torch required). The second block is
+# pulled in by the vendored OmniDocBench import chain (import-time only for
+# the reading-order path). The AR/CR/NED/F1/BLEU chain (transform.py +
+# calculate_metrics.py) additionally imports nltk/jieba and (at module import
+# time) torch/transformers, so run that part inside the inference environment
+# (`conda activate tongguocr`) and this part here, or install both sets into
+# one env.
+Levenshtein==0.25.1
+nltk==3.9.1
+apted==1.0.3
+numpy==1.24.4
+pandas==2.0.3
+scipy==1.10.1
+PyYAML==6.0.2
+evaluate==0.4.3
+func-timeout==4.3.5
+beautifulsoup4==4.11.1
+Pillow==10.4.0
+pylatexenc==2.10
+
+matplotlib
+loguru
+lxml
+tabulate
