@@ -1,42 +1,64 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ---- Python (inference/ + evaluation/) ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
 
-# dependencies
-node_modules/
-/.pnp
-.pnp.*
-.yarn/*
+# ---- model weights: never commit; fetch via inference/scripts/download_weights.sh ----
+inference/weights/ocr/*
+inference/weights/layout/*
+!inference/weights/ocr/.gitkeep
+!inference/weights/layout/.gitkeep
+*.pth
+*.pt
+*.bin
+*.safetensors
+
+# ---- inference run outputs ----
+inference/outputs/
+outputs/
+tmp/
+work/
+*.log
+
+# ---- evaluation artifacts ----
+eval_out/
+staging/
+metric.json
+predict.jsonl
+predict_raw.jsonl
+res.txt
+summary.json
+ro_ed_work/
+
+# ---- OS / editor ----
+.DS_Store
+
+# ---- website (Vite/React) ----
+/website/node_modules/
+/website/dist/
+/website/coverage/
+/website/.next/
+/website/.vinext/
+/website/out/
+/website/.wrangler/
+/website/.vercel/
+/website/.env*
+/website/npm-debug.log*
+/website/yarn-debug.log*
+/website/yarn-error.log*
+/website/.pnpm-debug.log*
+/website/next-env.d.ts
+.env*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
-# testing
-coverage/
-
-# next.js
-/.next/
-/.vinext/
-/out/
-
-# misc
-.DS_Store
 *.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-next-env.d.ts
-dist/
-/.wrangler/
-outputs/
-/work/
+/.pnp
+.pnp.*
+.yarn/*
