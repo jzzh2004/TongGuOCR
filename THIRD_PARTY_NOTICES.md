@@ -6,17 +6,17 @@ components used by or included in this repository.
 
 ## OpenMMLab stack (Apache-2.0)
 
-The layout-analysis stage of `inference/tonggu_pipe/layout/` is built on the
+The layout-analysis stage of `tongguocr/layout/` is built on the
 OpenMMLab ecosystem:
 
 - MMCV (`mmcv-full 1.7.2`) — https://github.com/open-mmlab/mmcv — Apache-2.0
 - MMDetection (`mmdet 2.25.2`) — https://github.com/open-mmlab/mmdetection — Apache-2.0
 - MMRotate (`mmrotate 0.3.2`) — https://github.com/open-mmlab/mmrotate — Apache-2.0
 
-The prebuilt `mmcv-full` wheel shipped under `inference/wheels/` is provided
-for convenience (Linux x86_64, CPython 3.10, sm_86); on other configurations
-`inference/setup_env.sh` builds it from source. `inference/scripts/patch_openmmlab.py`
-applies small compatibility patches for newer PyTorch versions.
+No binary wheel is shipped with the repository: `tools/setup_env.sh`
+downloads or builds `mmcv-full` from source as appropriate for your platform.
+`tools/patch_openmmlab.py` applies small compatibility patches for newer
+PyTorch versions.
 
 ## OmniDocBench (Apache-2.0), vendored
 
