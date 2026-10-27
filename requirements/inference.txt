@@ -1,0 +1,42 @@
+# Unified environment requirements (python 3.10)
+# Install order matters (setup_env.sh does this for you):
+#   1) pip install torch==2.10.0                -> PyPI wheel bundles the cu128 runtime
+#   2) pip install transformers==5.3.0          -> glm_ocr modeling
+#   3) mmcv-full==1.7.2 via local wheel (see setup_env.sh; source-built once, cached in wheels/)
+#   4) pip install -r requirements_unified.txt (this file)
+# vLLM serving is NOT part of this env anymore: use setup_vllm2_env.sh (vllm 0.32).
+setuptools==80.10.2
+Cython==3.0.12
+# torchvision MUST be pinned: mmcv-full 1.7.2 declares an unbounded torchvision
+# dep, and the latest torchvision requires a newer torch — the resolver would
+# then upgrade torch past 2.10.0 and break the mmcv wheel ABI. 0.25.0 pairs
+# with torch 2.10.x (verified working combo in the tongguocr env).
+torchvision==0.25.0
+numpy==2.2.6
+pillow==12.3.0
+opencv-python-headless==5.0.0.93
+mmdet==2.25.2
+mmrotate==0.3.2
+timm==0.6.13
+e2cnn==0.2.3
+torch-dct==0.1.6
+Polygon3==3.0.9.1
+terminaltables
+easydict
+addict
+yacs==0.1.8
+yapf==0.43.0
+shapely
+pycocotools
+scikit-image
+scipy
+matplotlib
+nltk
+jieba
+zhconv
+editdistance==0.8.1
+accelerate
+tqdm
+requests
+PyYAML
+regex

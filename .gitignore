@@ -1,4 +1,4 @@
-# ---- Python (inference/ + evaluation/) ----
+# ---- Python ----
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -8,18 +8,22 @@ __pycache__/
 .venv/
 venv/
 
-# ---- model weights: never commit; fetch via inference/scripts/download_weights.sh ----
-inference/weights/ocr/*
-inference/weights/layout/*
-!inference/weights/ocr/.gitkeep
-!inference/weights/layout/.gitkeep
+# ---- model weights: never commit; fetch via tools/download_weights.sh ----
+weights/ocr/*
+weights/layout/*
+!weights/ocr/.gitkeep
+!weights/layout/.gitkeep
 *.pth
 *.pt
 *.bin
 *.safetensors
 
-# ---- inference run outputs ----
-inference/outputs/
+# ---- pip/wheel caches used by the setup scripts ----
+.pip_cache/
+.pip_tmp/
+wheels/
+
+# ---- run outputs ----
 outputs/
 tmp/
 work/

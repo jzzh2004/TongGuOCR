@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tongguocr"
+version = "1.0.0"
+description = "TongGuOCR: OCR for classical Chinese documents (layout + block + recognition)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+# Dependencies are deliberately NOT declared here: TongGuOCR needs two
+# separate environments (mmcv-full 1.7.2 pins torch 2.10 + py3.10, while
+# vLLM 0.32 needs torch 2.13 + py3.12). Install the right one per backend
+# with tools/setup_env.sh / tools/setup_vllm_env.sh, which use
+# requirements/inference.txt — see README.md "Environment".
+dependencies = []
+
+[project.scripts]
+tongguocr = "tongguocr.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["tongguocr*"]
+
+[tool.setuptools.package-data]
+tongguocr = ["layout/hdc_speed.py"]
