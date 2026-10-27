@@ -24,7 +24,7 @@ applies small compatibility patches for newer PyTorch versions.
 tree + license + packaging metadata) of OmniDocBench:
 
 - Upstream: https://github.com/opendatalab/OmniDocBench — Apache-2.0
-- Vendored revision: ``be7a44d371e43801fabd2e31e02976f106b6aa16` (2026-04-10, "sync: align codebase with local v1.6")` (pinned by matching
+- Vendored revision: `be7a44d371e43801fabd2e31e02976f106b6aa16` (2026-04-10, "sync: align codebase with local v1.6") (pinned by matching
   `src/dataset/end2end_dataset.py` against upstream history)
 - Only the metric engine surface used by the RO-ED evaluation is vendored;
   upstream demo data, assets, and result directories are omitted.
