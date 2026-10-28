@@ -10,6 +10,7 @@ import threading
 import requests
 
 from ..models import OcrBlockResult
+from .preprocess import prepare_pil_image
 from .relation_tokens import finalize_ocr_text
 
 
@@ -26,39 +27,6 @@ def encode_image_to_data_url(image_path: str | Path) -> str:
     return f"data:{mime};base64,{b64}"
 
 
-def _prepare_pil_image(
-    image_path: Path,
-    image_max_pixels: int,
-    image_min_pixels: int,
-):
-    """Mirror glmocr_block_ocr._prepare_pil_image (resize_mode=image_max_pixels).
-
-    Keeping this bit-identical (same int rounding, same PIL default resample,
-    same RGB conversion) guarantees the vLLM server receives exactly the same
-    pixel matrix the transformers helper would feed its local processor.
-    """
-    from PIL import Image
-
-    image = Image.open(image_path)
-    total_pixels = image.width * image.height
-    if total_pixels > image_max_pixels:
-        resize_factor = (image_max_pixels / total_pixels) ** 0.5
-        width = max(1, int(image.width * resize_factor))
-        height = max(1, int(image.height * resize_factor))
-        image = image.resize((width, height))
-
-    total_pixels = image.width * image.height
-    if total_pixels < image_min_pixels:
-        resize_factor = (image_min_pixels / total_pixels) ** 0.5
-        width = max(1, int(image.width * resize_factor))
-        height = max(1, int(image.height * resize_factor))
-        image = image.resize((width, height))
-
-    if image.mode != "RGB":
-        image = image.convert("RGB")
-    return image
-
-
 def encode_prepared_image_to_data_url(
     image_path: str | Path,
     *,
@@ -66,7 +34,11 @@ def encode_prepared_image_to_data_url(
     image_min_pixels: int,
 ) -> str:
     """Pre-resize locally, then re-encode losslessly (PNG) as a data URL."""
-    image = _prepare_pil_image(Path(image_path), image_max_pixels, image_min_pixels)
+    image = prepare_pil_image(
+        Path(image_path),
+        image_max_pixels=image_max_pixels,
+        image_min_pixels=image_min_pixels,
+    )
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     b64 = base64.b64encode(buffer.getvalue()).decode("utf-8")

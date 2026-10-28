@@ -30,12 +30,12 @@ TENSOR_PARALLEL_SIZE="${TENSOR_PARALLEL_SIZE:-1}"
 # 0.55 leaves ample same-card headroom on both 24G and 48G GPUs. Override to
 # 0.9 only for standalone serving with no same-card layout work.
 GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.55}"
-# --- Alignment with the transformers (glmocr_hf) backend ---
+# --- Alignment with the transformers backend ---
 # The unified inference profile is: bf16, max_tokens 8192, pixel budget
 # [1024, 1048576], greedy decoding. See tongguocr/config.py
 # (ocr.inference) — keep these defaults in sync.
-# dtype bfloat16 matches GlmOcrForConditionalGeneration loading in
-# glmocr_block_ocr.py (torch_dtype=torch.bfloat16); "auto" would pick fp32
+# dtype bfloat16 matches the transformers backend load
+# (torch_dtype=torch.bfloat16); "auto" would pick fp32
 # from config.json and diverge from the transformers backend.
 DTYPE="${DTYPE:-bfloat16}"
 # 8192 generation tokens + ~1400 image tokens (1M pixel budget) + margin.

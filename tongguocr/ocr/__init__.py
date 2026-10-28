@@ -1,9 +1,8 @@
 """OCR backends for tongguocr.
 
-In-process backends (``transformers``, ``vllm`` HTTP client) are dispatched
-here; the heavy GLMOCR helper scripts (``glmocr_block_ocr.py``,
-``glmocr_direct_ocr.py``, ``glmocr_vllm_block_ocr.py``) run as subprocesses
-orchestrated by :mod:`tongguocr.pipeline`.
+Both are in-process: ``transformers`` (default, local GPU) and ``vllm``
+(OpenAI-compatible HTTP client pointed at a running vLLM server; see
+docs/vllm.md).
 """
 
 from __future__ import annotations
@@ -18,11 +17,6 @@ __all__ = ["recognize_blocks"]
 def recognize_blocks(block_images: list[dict], config: dict) -> list[OcrBlockResult]:
     backend = config["ocr"]["backend"]
     results: list[OcrBlockResult] = []
-    if backend == "glmocr_hf":
-        raise ValueError(
-            "OCR backend 'glmocr_hf' must be run via the pipeline so it can "
-            "prepare page stubs and invoke the external GLMOCR helper environment."
-        )
     for item in block_images:
         kwargs = {
             "block_id": item["block_id"],

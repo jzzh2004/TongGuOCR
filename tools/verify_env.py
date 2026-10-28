@@ -104,7 +104,7 @@ def main() -> int:
         if not has_glmocr:
             failures.append("vLLM does not support GlmOcrForConditionalGeneration in this env")
     except ImportError:
-        # vLLM serving lives in its own env (tongguocr-vllm2, see setup_vllm2_env.sh);
+        # vLLM serving lives in its own env (tongguocr-vllm2, see setup_vllm_env.sh);
         # this env only needs layout + transformers OCR.
         report["checks"]["vllm_glmocr_supported"] = "skipped (vllm not installed in this env; serving env is separate)"
     except Exception as exc:  # pragma: no cover - environment diagnostics

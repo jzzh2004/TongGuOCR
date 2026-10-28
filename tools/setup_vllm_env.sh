@@ -19,6 +19,21 @@
 # start_vllm_server.sh auto-selects this env's python when present.
 set -euo pipefail
 
+# Minimal URL fetchers: prefer curl, fall back to wget, then python3 (some
+# minimal containers ship none of the first two).
+fetch() { # fetch <url> -> stdout
+  if command -v curl >/dev/null 2>&1; then curl -fsSL "$1"
+  elif command -v wget >/dev/null 2>&1; then wget -qO- "$1"
+  else python3 -c 'import sys,urllib.request;sys.stdout.buffer.write(urllib.request.urlopen(sys.argv[1],timeout=120).read())' "$1"
+  fi
+}
+download() { # download <url> <dest> (resumable)
+  if command -v curl >/dev/null 2>&1; then curl -fL --retry 3 -C - -o "$2" "$1"
+  elif command -v wget >/dev/null 2>&1; then wget -q -c -O "$2" "$1"
+  else python3 -c 'import sys,urllib.request;u=urllib.request.urlopen(sys.argv[1],timeout=120);open(sys.argv[2],"ab").write(u.read())' "$1" "$2"
+  fi
+}
+
 ENV_NAME="${ENV_NAME:-tongguocr-vllm2}"
 CONDA_BASE="${CONDA_BASE:-$(conda info --base 2>/dev/null || echo "$HOME/miniconda")}"
 # Prefix-based (mirrors setup_env.sh): robust to same-name envs elsewhere.
@@ -62,7 +77,7 @@ else
       torchvision) ver="0.28.0" ;;
       torchaudio)  ver="2.11.0" ;;
     esac
-    url_path="$(curl -fsSL "$TORCH_INDEX/$pkg/" | \
+    url_path="$(fetch "$TORCH_INDEX/$pkg/" | \
       grep -o "href=\"[^\"]*${ver}%2Bcu129-cp312-cp312-manylinux[^\"]*x86_64[^\"]*\.whl[^\"]*\"" | \
       head -n1 | sed 's/^href="//; s/"$//')"
     [[ -n "$url_path" ]] || { echo "!! could not find ${pkg} ${ver}+cu129 cp312 wheel in $TORCH_INDEX"; exit 1; }
@@ -83,7 +98,7 @@ else
     # Index pages nest: /0.32.0/cu129/ holds only `vllm/`; the wheel hrefs there
     # are relative ../../../<hash>/vllm-...whl resolving to the SITE ROOT.
     # Join by hand.
-    url_path="$(curl -fsSL "$VLLM_INDEX/vllm/" | \
+    url_path="$(fetch "$VLLM_INDEX/vllm/" | \
       grep -o 'href="[^"]*%2Bcu129-cp38-abi3-manylinux[^"]*x86_64\.whl"' | head -n1 | \
       sed 's/^href="//; s/"$//')"
     [[ -n "$url_path" ]] || { echo "!! no cu129 x86_64 vllm wheel listed at $VLLM_INDEX/vllm/"; exit 1; }
@@ -92,7 +107,7 @@ else
       *)         VLLM_WHEEL_URL="https://wheels.vllm.ai/${url_path#\.\./\.\./\.\./}" ;;
     esac
     echo "    downloading $VLLM_WHEEL_URL (~560MB)"
-    curl -fL --retry 3 -C - -o "$WHEELS_DIR/vllm-0.32.0+cu129-cp38-abi3-manylinux_2_28_x86_64.whl" "$VLLM_WHEEL_URL"
+    download "$VLLM_WHEEL_URL" "$WHEELS_DIR/vllm-0.32.0+cu129-cp38-abi3-manylinux_2_28_x86_64.whl"
     VLLM_WHEEL="$(ls "$WHEELS_DIR"/vllm-0.32.0+cu129-*.whl | head -n1)"
   fi
   echo "    using wheel: $VLLM_WHEEL"

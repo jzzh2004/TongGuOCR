@@ -9,20 +9,18 @@ import yaml
 PACKAGE_ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = PACKAGE_ROOT.parent
 
-# The single source of runtime configuration. A user config passed to
-# `--config` (YAML or JSON) is deep-merged onto these defaults, so a user
-# file only needs to contain the keys it overrides, e.g.
+# Built-in runtime defaults. An optional user config passed via `--config`
+# (YAML or JSON) is deep-merged onto these, so a user file only needs the
+# keys it overrides, e.g.
 #
 #     ocr:
 #       backend: vllm
 #       vllm:
-#         api_base: http://127.0.0.1:8090/v1
-#     layout_inference:
-#       device: cuda:1
+#         api_base: http://10.0.0.2:8090/v1
 #
-# Internal preprocessing constants (blocking thresholds/weights, crop
-# refinement) are part of the released pipeline behavior; override them only
-# if you know what you are doing.
+# The `blocking` section holds the internal block-segmentation solver
+# constants of the released pipeline; override only if you know what you
+# are doing.
 DEFAULTS: dict[str, Any] = {
     "layout_inference": {
         "device": "cuda:0",
@@ -122,18 +120,18 @@ DEFAULTS: dict[str, Any] = {
         },
     },
     "ocr": {
-        "backend": "glmocr_hf",
-        # NOTE: the text prompt below is combined with a structured image item by
-        # every backend before chat-template rendering, so the effective user
-        # turn is `<image tokens> + "Text Recognition:"` — exactly what the
-        # training annotations express as "<image>Text Recognition:" (the
+        "backend": "transformers",
+        # NOTE: the text prompt below is combined with a structured image item
+        # by every backend before chat-template rendering, so the effective
+        # user turn is `<image tokens> + "Text Recognition:"` — exactly what
+        # the training annotations express as "<image>Text Recognition:" (the
         # tokenizer has no literal <image> token; the trainer replaced the
-        # placeholder with real image tokens). Do NOT inline "<image>" into the
-        # string: it would be tokenized as plain text garbage.
+        # placeholder with real image tokens). Do NOT inline "<image>" into
+        # the string: it would be tokenized as plain text garbage.
         "prompt": "Text Recognition:",
         # Single source of truth shared by ALL OCR backends so that
-        # transformers (glmocr_hf) and vLLM always decode with identical
-        # settings: same max_tokens, same pixel budget, greedy decoding, bf16.
+        # transformers and vLLM always decode with identical settings: same
+        # max_tokens, same pixel budget, greedy decoding, bf16.
         "inference": {
             "prompt": "Text Recognition:",
             "max_tokens": 8192,
@@ -142,50 +140,22 @@ DEFAULTS: dict[str, Any] = {
             "temperature": 0.0,
             "dtype": "bfloat16",
         },
+        "transformers": {
+            "model_path": "./weights/ocr",
+            "device": "cuda:0",
+        },
         "vllm": {
             "api_base": "http://127.0.0.1:8090/v1",
             "model_name": "tonggu-ocr",
             "timeout": 600,
-            "max_page_concurrency": 1,
             "max_tokens": 8192,
             "temperature": 0.0,
-            # Client-side pre-resize mirroring glmocr_block_ocr._prepare_pil_image
-            # so the server receives the same pixel matrix regardless of its
+            # Client-side pre-resize (tongguocr/ocr/preprocess.py) so the
+            # server receives the same pixel matrix regardless of its
             # processor defaults.
             "image_max_pixels": 1048576,
             "image_min_pixels": 1024,
             "pre_resize": True,
-        },
-        "transformers": {
-            "model_path": "./weights/ocr",
-            "max_tokens": 8192,
-            "temperature": 0.0,
-        },
-        "glmocr_hf": {
-            "python_bin": "python",
-            "helper_script": "./tongguocr/ocr/glmocr_block_ocr.py",
-            "model_path": "./weights/ocr",
-            "prompt": "Text Recognition:",
-            "resize_mode": "image_max_pixels",
-            "image_max_pixels": 1048576,
-            "image_min_pixels": 1024,
-            "max_tokens": 8192,
-            "gpu_ids": "0",
-            "concurrency": 1,
-            "resume": True,
-        },
-        "glmocr_hf_direct": {
-            "python_bin": "python",
-            "helper_script": "./tongguocr/ocr/glmocr_direct_ocr.py",
-            "model_path": "./weights/ocr",
-            "prompt": "Text Recognition:",
-            "resize_mode": "image_max_pixels",
-            "image_max_pixels": 1048576,
-            "image_min_pixels": 1024,
-            "max_tokens": 8192,
-            "gpu_ids": "0",
-            "concurrency": 1,
-            "resume": True,
         },
     },
     # Fixed Block Crop Refinement settings: margin p, masking and canvas alpha.

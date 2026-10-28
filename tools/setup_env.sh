@@ -5,7 +5,7 @@
 #   - THIS script builds `tongguocr`: python 3.10 + torch 2.10.0 (PyPI wheel
 #     bundles the cu128 runtime) + transformers 5.3.0 (glm_ocr native support)
 #     + mmcv-full 1.7.2 (built against torch 2.10).
-#   - setup_vllm2_env.sh builds `tongguocr-vllm2` for vLLM serving, which
+#   - setup_vllm_env.sh builds `tongguocr-vllm2` for vLLM serving, which
 #     needs torch 2.13 and cannot coexist with the mmcv-locked torch 2.10.
 set -euo pipefail
 
