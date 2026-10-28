@@ -89,3 +89,6 @@ Notes:
   0.0150837504…; the paper reports them rounded as 3.49 / 1.51. Fresh
   end-to-end runs may deviate slightly (different generation runs); see
   `ro_ed/README.md` for the exact-reproduction procedure.
+- Fresh-clone reproduction check (2026-10-28, different GPU, rebuilt envs):
+  AR/CR/NED within 0.01 pt of the table above (M5 CR 94.44; MTHv2 identical
+  except Precision 98.07), RO-ED 0.03463 / 0.01511 — i.e. 3.46 / 1.51.

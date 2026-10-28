@@ -168,6 +168,13 @@ TongGuOCR 在两个中文历史文献 OCR 基准上取得了当前最佳性能�
 行的逐后端差异不超过 0.04（与其精确均值的差异不超过 0.01）；MTHv2 行差异
 不超过 0.01。存档运行的精确数值见
 [evaluation/README.md](evaluation/README.md)。
+我们做过一次全新端到端复现检验（全新 git 克隆、按 tools/setup_env.sh 与
+evaluation/requirements_eval.txt 重建环境、在与原始运行不同的 GPU 上完成全量
+推理与评测）：结果与存档值的差异均在 bf16 跨硬件数值漂移范围内——M5HisDoc
+AR/CR/NED = 93.74 / 94.44 / 6.17、RO-ED = 0.0346；MTHv2 AR/CR/NED =
+97.93 / 98.32 / 2.05（res.txt 除 Precision +0.01 外逐字节一致）、RO-ED =
+0.0151。页面文本字符级一致率：M5 93%、MTHv2 99.8%；少数差异页仅含 1–2 个
+边缘字形替换。
 
 在更具挑战性的 M5HisDoc 基准上，相较各指标最优的竞争方法，TongGuOCR 将 NED 从 10.43 降低至 6.15，并将 RO-ED 从 7.53 降低至 3.49。完整对比实验、消融研究与定性结果请参阅[论文](https://arxiv.org/abs/2608.07917)和[项目主页](https://jzzh2004.github.io/TongGuOCR)。
 

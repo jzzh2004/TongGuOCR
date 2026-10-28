@@ -178,6 +178,14 @@ backend's full-run values sit within 0.04 points of the tabled M5HisDoc row
 (within 0.01 of the exact backend means); the MTHv2 row matches within 0.01.
 Exact archived-run numbers are listed in
 [evaluation/README.md](evaluation/README.md).
+A fresh end-to-end reproduction check (fresh `git` clone, environments rebuilt
+from `tools/setup_env.sh` + `evaluation/requirements_eval.txt`, full-benchmark
+inference and evaluation on a different GPU than the original runs) reproduced
+the archived values within ordinary bf16 cross-hardware drift: M5HisDoc
+AR/CR/NED = 93.74 / 94.44 / 6.17 and RO-ED = 0.0346; MTHv2 AR/CR/NED =
+97.93 / 98.32 / 2.05 (res.txt byte-identical except Precision +0.01) and
+RO-ED = 0.0151. Page texts were character-identical on 93% (M5) / 99.8% (MTHv2)
+of pages; the few differing pages carry 1–2 borderline-glyph substitutions.
 
 On the more challenging M5HisDoc benchmark, TongGuOCR reduces NED from 10.43 to 6.15 and RO-ED from 7.53 to 3.49 relative to the best competing score for each metric. See the [paper](https://arxiv.org/abs/2608.07917) and [project page](https://jzzh2004.github.io/TongGuOCR) for full comparisons, ablations, and qualitative results.
 
