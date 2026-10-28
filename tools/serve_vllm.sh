@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # vllm 0.18 — formerly installed in the unified env; fresh builds exclude it — has a GlmOcr text-stack
 # numeric bug: logits diverge from transformers by multiple nats on uncertain
 # positions, generations fork mid-text and degenerate into repetition loops
-# (verified 2026-10-21; see README.md "Backends"). vllm 0.32 fixes it and
+# (see README.md). vllm 0.32 fixes it and
 # reproduces the transformers backend byte-exactly. 0.32 also needs torch 2.13,
 # which the mmcv-locked unified env (torch 2.10) cannot host.
 _CONDA_BASE="$(conda info --base 2>/dev/null || echo "$HOME/miniconda")"

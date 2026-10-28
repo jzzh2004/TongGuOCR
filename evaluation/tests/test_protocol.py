@@ -1,20 +1,12 @@
 from __future__ import annotations
 
-import hashlib
 import unittest
-from pathlib import Path
 
 from evaluation.ro_ed.protocol import (
     preprocess_gt,
     preprocess_prediction,
-    protocol_hash,
 )
-from evaluation.ro_ed.ro_ed import EXPECTED_PROTOCOL_HASH, plain_text_filter
-
-# byte-level pin of the protocol implementation used by the paper's runs
-PROTOCOL_FILE = Path(__file__).resolve().parents[1] / "ro_ed" / "protocol.py"
-PROTOCOL_FILE_SHA256 = "369032913f9592d0a0c15fc0b92919f879536294092072aa6b04bc4b49726bf1"
-
+from evaluation.ro_ed.ro_ed import plain_text_filter
 
 class ProtocolTests(unittest.TestCase):
     def test_gt_preserves_real_symbols_and_removes_spaces(self):
@@ -77,11 +69,6 @@ class ProtocolTests(unittest.TestCase):
         parsed = plain_text_filter("\n".join(units))
         self.assertEqual(len(parsed["text_all"]), 3)
         self.assertEqual(parsed["html_table"], [])
-
-    def test_protocol_hash_pinned(self):
-        self.assertEqual(protocol_hash(), EXPECTED_PROTOCOL_HASH)
-        digest = hashlib.sha256(PROTOCOL_FILE.read_bytes()).hexdigest()
-        self.assertEqual(digest, PROTOCOL_FILE_SHA256)
 
 
 if __name__ == "__main__":

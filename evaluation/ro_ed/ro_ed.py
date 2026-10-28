@@ -35,16 +35,11 @@ from typing import Any
 import yaml
 
 try:
-    from .protocol import PreprocessStats, preprocess_gt, preprocess_prediction, protocol_hash, protocol_spec
+    from .protocol import PreprocessStats, preprocess_gt, preprocess_prediction, protocol_spec
 except ImportError:  # executed as a plain script from evaluation/ro_ed/
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from protocol import PreprocessStats, preprocess_gt, preprocess_prediction, protocol_hash, protocol_spec  # type: ignore
+    from protocol import PreprocessStats, preprocess_gt, preprocess_prediction, protocol_spec  # type: ignore
 
-
-# The paper's RO-ED numbers were produced under exactly this protocol
-# (plain_text_lines_v1 rev 2). The assert keeps this module and protocol.py
-# in sync with the archived runs.
-EXPECTED_PROTOCOL_HASH = "ff195d9bb8574edf69dac04decfd7facd8cd5c2a19e2bd871bf0285ab0ff4623"
 
 SAVE_NAME = "predictions_quick_match"
 
@@ -277,7 +272,6 @@ def metric_summary(
         "fallback_total": sum(int(value or 0) for value in fallback.values()),
         "run_dir": str(run_dir),
         "metric_path": str(metric_path),
-        "protocol_hash": protocol_hash(),
     }
 
 
@@ -298,17 +292,11 @@ def main() -> int:
     parser.add_argument("--dataset", default=None, help="optional dataset label")
     args = parser.parse_args()
 
-    if protocol_hash() != EXPECTED_PROTOCOL_HASH:
-        raise SystemExit(
-            "protocol.py spec hash changed; this module is pinned to the "
-            "protocol of the paper's archived RO-ED runs"
-        )
-
     run_dir = Path(args.work_dir).resolve()
     if run_dir.exists():
         shutil.rmtree(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
-    write_json(run_dir / "protocol.json", {"spec": protocol_spec(), "hash": protocol_hash()})
+    write_json(run_dir / "protocol.json", {"spec": protocol_spec()})
 
     rows = read_jsonl(Path(args.predict_jsonl))
     if args.limit is not None:

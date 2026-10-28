@@ -55,11 +55,12 @@ conda activate tongguocr
   --dataset-root /path/to/M5 \
   --output-dir runs/eval/m5
 
-# RO-ED needs its own (torch-free) deps; skip it or install first:
-python3 -m pip install -r evaluation/requirements_eval.txt
-# ... or run once with --skip-ro-ed and re-run RO-ED separately:
-#   python -m evaluation.ro_ed.ro_ed --predict-jsonl .../predict.jsonl \
-#     --work-dir .../ro_ed --omnidocbench-root evaluation/third_party/OmniDocBench
+# RO-ED step: torch-free deps in a SEPARATE env (its pinned numpy/pandas
+# must not downgrade the inference stack), selected via RO_ED_PYTHON:
+conda create -n tongguocr-eval python=3.10 -y
+conda run -n tongguocr-eval pip install -r evaluation/requirements_eval.txt
+RO_ED_PYTHON="$(conda info --base)/envs/tongguocr-eval/bin/python" \
+./evaluation/run_eval.sh ...          # add --skip-ro-ed to skip step 4
 ```
 
 RO-ED needs no extra pipeline outputs: the relation tokens are already

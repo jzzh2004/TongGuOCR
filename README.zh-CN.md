@@ -78,7 +78,7 @@ bash tools/download_weights.sh
 # → weights/layout/    版面检测器 checkpoint（finetune_infer.pth）
 ```
 
-每个下载文件都会做 sha256 校验。可通过 `HF_REPO_ID` 覆盖默认仓库 ID。
+可通过 `HF_REPO_ID` 覆盖默认仓库 ID。
 
 ## 快速上手
 
@@ -137,9 +137,13 @@ texts/ 文件: 第一行文本⏎第二行文本     （每行输出对应一个
 步骤有独立的依赖锁定文件（`evaluation/requirements_eval.txt`，无需 torch）：
 
 ```bash
-conda activate tongguocr                          # AR/CR/NED 步骤
-pip install -r evaluation/requirements_eval.txt   # RO-ED 步骤（一次性）
+conda activate tongguocr                          # 步骤 1-3（AR/CR/NED）
 
+# RO-ED 步骤：独立的 torch-free 环境，其锁定的 numpy/pandas 不会与
+# 推理环境冲突
+conda create -n tongguocr-eval python=3.10 -y
+conda run -n tongguocr-eval pip install -r evaluation/requirements_eval.txt
+RO_ED_PYTHON="$(conda info --base)/envs/tongguocr-eval/bin/python" \
 ./evaluation/run_eval.sh \
   --dataset   m5 \                                # 或 mthv2
   --run-dir   <含 texts/ 的流水线输出目录> \

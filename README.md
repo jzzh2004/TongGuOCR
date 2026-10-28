@@ -79,8 +79,7 @@ bash tools/download_weights.sh
 # → weights/layout/    layout detector checkpoint (finetune_infer.pth)
 ```
 
-Every downloaded file is sha256-verified. Set `HF_REPO_ID` to override the
-default repository id.
+Set `HF_REPO_ID` to override the default repository id.
 
 ## Quickstart
 
@@ -145,9 +144,13 @@ from a pipeline output directory. The RO-ED step has its own dependency pin
 file (`evaluation/requirements_eval.txt`, torch-free):
 
 ```bash
-conda activate tongguocr                       # AR/CR/NED steps
-pip install -r evaluation/requirements_eval.txt  # RO-ED step (once)
+conda activate tongguocr                       # steps 1-3 (AR/CR/NED)
 
+# RO-ED step: torch-free env kept separate so its pinned numpy/pandas
+# cannot clash with the inference stack
+conda create -n tongguocr-eval python=3.10 -y
+conda run -n tongguocr-eval pip install -r evaluation/requirements_eval.txt
+RO_ED_PYTHON="$(conda info --base)/envs/tongguocr-eval/bin/python" \
 ./evaluation/run_eval.sh \
   --dataset   m5 \                             # or mthv2
   --run-dir   <pipeline output containing texts/> \

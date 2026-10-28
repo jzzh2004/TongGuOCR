@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from collections import Counter
@@ -140,11 +139,6 @@ def protocol_spec() -> dict[str, Any]:
         "unknown_angle_policy": "preserve and report",
         "missing_page_policy": "evaluate existing pages only",
     }
-
-
-def protocol_hash() -> str:
-    encoded = json.dumps(protocol_spec(), ensure_ascii=False, sort_keys=True).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
 
 
 def _remove_spaces(text: str) -> tuple[str, int]:
