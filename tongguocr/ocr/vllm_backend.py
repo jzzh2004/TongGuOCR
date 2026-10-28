@@ -11,7 +11,6 @@ import requests
 
 from ..models import OcrBlockResult
 from .preprocess import prepare_pil_image
-from .relation_tokens import finalize_ocr_text
 
 
 _THREAD_LOCAL = threading.local()
@@ -77,9 +76,11 @@ def recognize_block_image_vllm(
         ],
         "max_tokens": backend_cfg["max_tokens"],
         "temperature": backend_cfg["temperature"],
-        # keep special tokens so the relation tokens survive decoding;
-        # finalize_ocr_text() below turns them into newlines
-        "skip_special_tokens": False,
+        # Strips the relation tokens server-side, mirroring the transformers
+        # backend's skip_special_tokens=True decode: the line structure of
+        # the final text comes from the pipeline's line-count re-split, the
+        # semantics the released benchmark numbers were produced under.
+        "skip_special_tokens": True,
     }
     start = time.perf_counter()
     session = getattr(_THREAD_LOCAL, "session", None)
@@ -93,7 +94,7 @@ def recognize_block_image_vllm(
     )
     response.raise_for_status()
     data = response.json()
-    text = finalize_ocr_text(data["choices"][0]["message"]["content"])
+    text = data["choices"][0]["message"]["content"]
     latency_ms = (time.perf_counter() - start) * 1000.0
     return OcrBlockResult(
         block_id=block_id,

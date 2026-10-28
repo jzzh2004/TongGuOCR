@@ -93,12 +93,7 @@ python -m tongguocr -i <images_dir> -o output/ --limit 10
 | `block_crops/<page>/` | 送入识别器的块裁剪图 |
 
 **阅读顺序词元。** 解码过程中,模型在文本行之间输出转移词元(`<down>`、`<left|up>` 等,共 24 个,见
-[tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py))。推理时每个转移词元被转换为换行,因此 `texts/` 中的行序**就是**模型预测的阅读顺序:
-
-```
-原始解码:  第一行文本<down>第二行文本
-texts/ 文件: 第一行文本⏎第二行文本
-```
+[tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py)),用以引导生成沿预测阅读路径进行。管线解码时剥离全部特殊词元,因此这些词元不会出现在输出文本中;`texts/` 的行结构由管线按 layout 检出的文本行数**确定性重切**得到(优先在标点处断行),行序跟随页面的块阅读顺序——这正是论文基准数字所用的输出语义。
 
 ### 可选:vLLM 后端
 

@@ -102,14 +102,13 @@ Outputs under `output/`:
 
 **Reading-order tokens.** While decoding, the model emits transition tokens
 between text lines (`<down>`, `<left|up>`, …; 24 in total — see
-[tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py)). At
-inference time every transition token becomes a newline, so the line order in
-`texts/` **is** the predicted reading order:
-
-```
-raw decode:  第一行文本<down>第二行文本
-texts/ file: 第一行文本⏎第二行文本
-```
+[tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py)) to
+steer generation along the predicted reading path. The pipeline decodes with
+special tokens stripped, so these tokens never appear in the output text;
+instead, `texts/` carries **one output line per detected layout text line**
+(a deterministic re-split at punctuation / even positions), and lines follow
+the page's block reading order. This is exactly the output semantics the
+paper's benchmark numbers were produced under.
 
 ### Optional: vLLM backend
 

@@ -16,7 +16,6 @@ import torch
 
 from ..models import OcrBlockResult
 from .preprocess import prepare_pil_image
-from .relation_tokens import finalize_ocr_text
 
 
 _TRANSFORMERS_CACHE: dict[str, tuple[object, object]] = {}
@@ -86,12 +85,11 @@ def recognize_block_image_transformers(
             do_sample=False,
         )
     generated_ids = outputs[0][inputs["input_ids"].shape[1] :]
-    # Relation tokens are special tokens: decode with them kept, then turn
-    # them into newlines (reading-order line breaks) and strip other specials.
-    decoded = processor.decode(generated_ids, skip_special_tokens=False)
-    decoded = finalize_ocr_text(
-        decoded, getattr(processor, "tokenizer", processor).all_special_tokens
-    )
+    # skip_special_tokens=True strips the relation tokens (and every other
+    # special token). The reading-order line structure of the final text is
+    # recovered afterwards by the pipeline's line-count re-split — exactly
+    # the semantics the released benchmark numbers were produced under.
+    decoded = processor.decode(generated_ids, skip_special_tokens=True)
     latency_ms = (time.perf_counter() - started) * 1000.0
     return OcrBlockResult(
         block_id=block_id,
