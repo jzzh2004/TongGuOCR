@@ -26,7 +26,7 @@ ENV_PREFIX="${ENV_PREFIX:-$CONDA_BASE/envs/$ENV_NAME}"
 PIP_INDEX="${PIP_INDEX:-https://pypi.org/simple}"
 TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu129}"
 VLLM_INDEX="${VLLM_INDEX:-https://wheels.vllm.ai/0.32.0/cu129}"
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WHEELS_DIR="${WHEELS_DIR:-$ROOT/wheels}"
 PIP_TMPDIR="${PIP_TMPDIR:-$ROOT/.pip_tmp}"
 mkdir -p "$PIP_TMPDIR" "$WHEELS_DIR"
@@ -124,4 +124,4 @@ print(f"cuda={torch.version.cuda} gpu={torch.cuda.get_device_name(0)}; GlmOcrFor
 EOFPY
 
 echo "Done. Env prefix: $ENV_PREFIX"
-echo "Start the server with: GPU_IDS=0 bash $ROOT/start_vllm_server.sh"
+echo "Start the server with: GPU_IDS=0 bash $ROOT/tools/serve_vllm.sh"

@@ -9,7 +9,7 @@
 #     needs torch 2.13 and cannot coexist with the mmcv-locked torch 2.10.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_NAME="${ENV_NAME:-tongguocr}"
 CONDA_BASE="${CONDA_BASE:-$(conda info --base 2>/dev/null || echo "$HOME/miniconda")}"
 # Prefix-based env creation: robust even if an env with the same NAME already

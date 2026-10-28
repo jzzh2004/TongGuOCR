@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Serve from the dedicated `tongguocr-vllm2` env (python 3.12 + vllm 0.32.0).
 # vllm 0.18 — formerly installed in the unified env; fresh builds exclude it — has a GlmOcr text-stack
 # numeric bug: logits diverge from transformers by multiple nats on uncertain
