@@ -7,191 +7,180 @@
 
   [Paper](https://arxiv.org/abs/2608.07917) ·
   [Project Page](https://jzzh2004.github.io/TongGuOCR) ·
-  [Online Demo](https://guji-ocr.com)
+  [Online Demo](https://guji-ocr.com) ·
+  [Weights](https://huggingface.co/jzzh2004/TongGuOCR)
 
   English · [简体中文](README.zh-CN.md)
 </div>
 
-## News
+## 📰 News
 
-- **[2026-10-28]** Inference code and evaluation suite released — `tongguocr` package (layout → block → recognition), AR/CR/NED + reading-order (RO-ED) evaluation.
-- Model weights are being released on Hugging Face: `jzzh2004/TongGuOCR`. If the repository is not reachable yet, check back shortly or follow the instructions in [Weights](#weights).
+- **[2026-10]** Inference code, evaluation suite, and model weights released.
+- **[2026-08]** Paper released on arXiv.
 
-## Overview
+## 📖 Introduction
 
-TongGuOCR is a layout-aware and token-augmented multimodal large language model (MLLM) for OCR of Chinese historical documents. It is designed for pages with complex layouts, rare historical characters, and nontrivial reading orders.
+TongGuOCR is a multimodal LLM for OCR of Chinese historical documents — pages
+with complex layouts, rare historical characters (生僻字), and non-trivial
+reading orders. It combines two components:
 
-The framework combines two complementary components:
+- **Layout-aware preprocessing** — a rotated-text-line detector plus a DP
+  block segmentation that groups lines into locally coherent recognition
+  blocks, preserving context while reducing cross-region interference.
+- **Token-augmented recognition** — rare characters get direct single-token
+  representations, and line-to-line transition tokens (e.g. `<left|up>`)
+  explicitly encode reading order during decoding.
 
-- **Layout-Aware Preprocessing** constructs and refines locally coherent recognition blocks, preserving useful context while reducing interference across regions.
-- **Token-Augmented Recognition** gives rare characters direct single-token representations and introduces line-to-line transition tokens to guide decoding along complex reading paths.
+<div align="left">
+  <img src="website/public/paper-assets/figures/figure-2.png" alt="TongGuOCR overview" width="90%">
+</div>
 
-![TongGuOCR overview](website/public/paper-assets/figures/figure-2.png)
+## 📊 Results
 
-## Highlights
+| Benchmark | AR ↑ | CR ↑ | NED ↓ | RO-ED ↓ |
+| :--- | ---: | ---: | ---: | ---: |
+| MTHv2 | **97.93** | **98.33** | **2.05** | **1.51** |
+| M5HisDoc | **93.76** | **94.46** | **6.15** | **3.49** |
 
-- **Layout-aware recognition blocks:** balances local context, character legibility, and reading order for complex historical pages.
-- **Rare-character vocabulary expansion:** shortens the decoding path for difficult historical glyphs through direct character-level tokens.
-- **Explicit transition modeling:** encodes coarse spatial displacement between text lines without requiring precise coordinates.
-- **Three-stage adaptation:** progressively aligns historical-domain knowledge, high-quality supervision, and block-level inference granularity.
+Full comparisons with competing methods are in the [paper](https://arxiv.org/abs/2608.07917).
+Per-backend archived runs of this repository (transformers and vLLM agree
+within 0.06 pts on every metric) are listed in
+[evaluation/README.md](evaluation/README.md).
 
-## Repository layout
+## 🛠️ Requirements
 
-```
-tongguocr/        Python package: layout detector, block segmentation, OCR backends, CLI
-evaluation/       AR/CR/NED + reading-order (RO-ED) evaluation, self-contained
-tools/            Environment setup, weight download, vLLM serving, helper scripts
-requirements/     Inference environment pin files
-weights/          Filled by tools/download_weights.sh (not committed)
-website/          Project website sources
-```
+| | |
+|---|---|
+| OS | Linux |
+| GPU | NVIDIA, ≥ 16 GB VRAM (24 GB tested), CUDA driver ≥ 12.8 runtime support |
+| Python | 3.10 (the setup script creates the conda env) |
+| PyTorch | 2.10.0 (cu128 wheel, installed automatically) |
+| transformers | ≥ 5.3.0 (native `glm_ocr` support — required) |
+| Disk | ~10 GB (weights ≈ 5 GB + environment) |
 
-## Installation
-
-Two conda environments are needed; they cannot be merged (the layout stack pins
-`mmcv-full 1.7.2` → torch 2.10 / python 3.10, while vLLM 0.32 needs torch 2.13 /
-python 3.12):
-
-```bash
-bash tools/setup_env.sh        # `tongguocr`: layout + transformers OCR (default backend)
-bash tools/setup_vllm_env.sh   # `tongguocr-vllm2`: vLLM serving (optional backend)
-```
-
-Notes:
-
-- **`transformers>=5.3.0` is required** — the released weights rely on the native
-  `glm_ocr` model class (no `auto_map` / remote code in the checkpoint).
-- `setup_env.sh` installs or builds `mmcv-full 1.7.2` for your platform; a
-  source build needs a CUDA toolkit at `CUDA_HOME` (~30–60 min).
-- `setup_vllm_env.sh` picks its route automatically: NVIDIA driver ≥ 580 →
-  plain PyPI `vllm==0.32.0`; driver 575.x → official `+cu129` wheels (the PyPI
-  torch/vllm wheels are CUDA-13-linked and won't run there).
-- **Do not use vLLM 0.18 for the GlmOcr model**: its text stack has a numeric
-  bug that makes outputs diverge from the transformers backend.
-- `PIP_INDEX` / `HF_ENDPOINT` can override the package index / model host (e.g.
-  mirrors) if pypi.org or huggingface.co is unreachable.
-
-## Weights
+## 🚀 Installation
 
 ```bash
+git clone https://github.com/jzzh2004/TongGuOCR.git
+cd TongGuOCR
+
+# 1) weights  (or place your local copy under weights/ocr and weights/layout)
 bash tools/download_weights.sh
-# → weights/ocr/       full HF model dir (model.safetensors ≈ 4.7 GB + configs + tokenizer)
-# → weights/layout/    layout detector checkpoint (finetune_infer.pth)
+
+# 2) environment  (~10 min; builds mmcv-full 1.7.2 once, see FAQ)
+bash tools/setup_env.sh
+conda activate tongguocr
 ```
 
-Set `HF_REPO_ID` to override the default repository id.
+If pypi.org is unreachable, prepend a mirror:
+`PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple bash tools/setup_env.sh`.
+`HF_ENDPOINT=https://hf-mirror.com` does the same for weight downloads.
 
-## Quickstart
+## 🖼️ Quickstart
 
 ```bash
 conda activate tongguocr
 
-# directory of page images → recognized plain text
-python -m tongguocr --input-dir <images_dir> --output-dir <output_dir>
+# a directory of page images → one recognized text file per page
+python -m tongguocr -i <images_dir> -o output/
 
-# single image
-python -m tongguocr --image <page.jpg> --output-dir <output_dir> --print-result
+# a single page (prints the recognized text)
+python -m tongguocr -i <page.jpg> -o output/ --print-result
+
+# recognize only the first 10 images of a directory
+python -m tongguocr -i <images_dir> -o output/ --limit 10
 ```
 
-(If the package is pip-installed, the `tongguocr` console script is equivalent
-to `python -m tongguocr`.)
+Outputs under `output/`:
 
-**vLLM backend** (faster on multi-page batches; byte-consistent with the
-transformers backend):
+| Path | Content |
+|---|---|
+| `texts/<page>.txt` | recognized plain text, one text line per output line |
+| `pages/<page>.json` | full page record: lines, blocks, per-block OCR text |
+| `visuals/<page>.jpg` | layout / block visualization |
+| `block_crops/<page>/` | the block crops fed to the recognizer |
 
-```bash
-GPU_IDS=0 bash tools/serve_vllm.sh          # in a separate shell: starts the OpenAI-compatible server
-python -m tongguocr --input-dir <images_dir> --output-dir <output_dir> --ocr-backend vllm
-```
-
-All options: `python -m tongguocr --help`. Behavior is controlled by built-in
-defaults (`tongguocr/config.py`) that an optional `--config user.yaml`
-(YAML/JSON) deep-merges onto — a user config only needs the keys it overrides:
-
-```yaml
-ocr:
-  backend: vllm
-  vllm:
-    api_base: http://127.0.0.1:8090/v1
-```
-
-Outputs under `<output_dir>`: per-page JSON under `pages/` (layout, blocks,
-`ocr_text`), recognized plain text under `texts/`, visualizations under
-`visuals/`, block crops under `block_crops/`, and a run `summary.json`.
-
-### Reading-order tokens and newlines
-
-During decoding the model emits line-transition relation tokens between text
-lines (e.g. `<left>`, `<down>`, `<right|up>`, …; 24 tokens in total —
-see `tongguocr/ocr/relation_tokens.py`). They are the model's way of expressing
-reading order. **At inference time every relation token is converted to a
-newline**, so the plain text in `texts/` already encodes the full reading
-order, one text line per output line:
+**Reading-order tokens.** While decoding, the model emits transition tokens
+between text lines (`<down>`, `<left|up>`, …; 24 in total — see
+[tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py)). At
+inference time every transition token becomes a newline, so the line order in
+`texts/` **is** the predicted reading order:
 
 ```
 raw decode:  第一行文本<down>第二行文本
-texts/ file: 第一行文本⏎第二行文本     (one text line per output line)
+texts/ file: 第一行文本⏎第二行文本
 ```
 
-All other special/control tokens are stripped. The conversion is applied
-identically by every backend, and the RO-ED evaluation treats it as equivalent
-to the raw token stream.
+### Optional: vLLM backend
 
-## Evaluation
-
-The evaluation suite reproduces the paper's four metrics (AR, CR, NED, RO-ED)
-from a pipeline output directory. The RO-ED step has its own dependency pin
-file (`evaluation/requirements_eval.txt`, torch-free):
+An OpenAI-compatible vLLM server gives higher multi-page throughput and is
+metric-equivalent to the transformers backend (verified within 0.06 pts on
+full benchmarks; byte-identical on probe pages). It needs a second conda env
+because vLLM 0.32 requires torch 2.13 while the layout stack pins torch 2.10:
 
 ```bash
-conda activate tongguocr                       # steps 1-3 (AR/CR/NED)
-
-# RO-ED step: torch-free env kept separate so its pinned numpy/pandas
-# cannot clash with the inference stack
-conda create -n tongguocr-eval python=3.10 -y
-conda run -n tongguocr-eval pip install -r evaluation/requirements_eval.txt
-RO_ED_PYTHON="$(conda info --base)/envs/tongguocr-eval/bin/python" \
-./evaluation/run_eval.sh \
-  --dataset   m5 \                             # or mthv2
-  --run-dir   <pipeline output containing texts/> \
-  --dataset-root /path/to/M5 \                 # or the MTHv2 root
-  --output-dir <eval output dir>
+bash tools/setup_vllm_env.sh      # creates `tongguocr-vllm2`
+GPU_IDS=0 bash tools/serve_vllm.sh        # terminal 1: start the server
+python -m tongguocr -i <images_dir> -o output/ --backend vllm   # terminal 2
 ```
 
-See [evaluation/README.md](evaluation/README.md) for dataset formats, metric
-definitions, options (`--skip-ro-ed`, `--match-workers`, `--limit`), and the
-expected metric values from the archived runs.
+Details, driver-specific install routes, and troubleshooting:
+[docs/vllm.md](docs/vllm.md).
 
-## Results
+## 📏 Evaluation
 
-TongGuOCR achieves state-of-the-art performance on two Chinese historical document OCR benchmarks.
+The evaluation suite reproduces the paper's four metrics (AR / CR / NED /
+RO-ED) from a pipeline output directory. The M5HisDoc and MTHv2 test sets are
+**not** redistributed; point the script at your local copy:
 
-| Benchmark | AR ↑ | CR ↑ | NED ↓ | RO-ED ↓ |
-| --- | ---: | ---: | ---: | ---: |
-| MTHv2 | **97.93** | **98.33** | **2.05** | **1.51** |
-| M5HisDoc | **93.76** | **94.46** | **6.15** | **3.49** |
+```bash
+./evaluation/run_eval.sh \
+  --dataset m5 \                      # or mthv2
+  --run-dir output/ \                 # pipeline output containing texts/
+  --dataset-root /path/to/M5 \        # or the MTHv2 root
+  --output-dir eval_out/m5
+```
 
-The table reproduces the paper's values. Per-backend full-benchmark runs of
-this repository reproduce them closely: the two OCR backends (transformers and
-vLLM) agree with each other to within 0.06 points on every metric, and each
-backend's full-run values sit within 0.04 points of the tabled M5HisDoc row
-(within 0.01 of the exact backend means); the MTHv2 row matches within 0.01.
-Exact archived-run numbers are listed in
-[evaluation/README.md](evaluation/README.md).
-A fresh end-to-end reproduction check (fresh `git` clone, environments rebuilt
-from `tools/setup_env.sh` + `evaluation/requirements_eval.txt`, full-benchmark
-inference and evaluation on a different GPU than the original runs) reproduced
-the archived values within ordinary bf16 cross-hardware drift: M5HisDoc
-AR/CR/NED = 93.74 / 94.44 / 6.17 and RO-ED = 0.0346; MTHv2 AR/CR/NED =
-97.93 / 98.32 / 2.05 (res.txt byte-identical except Precision +0.01) and
-RO-ED = 0.0151. Page texts were character-identical on 93% (M5) / 99.8% (MTHv2)
-of pages; the few differing pages carry 1–2 borderline-glyph substitutions.
+Dataset formats, metric definitions, options, and the expected values of the
+archived runs: [evaluation/README.md](evaluation/README.md).
 
-On the more challenging M5HisDoc benchmark, TongGuOCR reduces NED from 10.43 to 6.15 and RO-ED from 7.53 to 3.49 relative to the best competing score for each metric. See the [paper](https://arxiv.org/abs/2608.07917) and [project page](https://jzzh2004.github.io/TongGuOCR) for full comparisons, ablations, and qualitative results.
+## ❓ FAQ
 
-## Citation
+<details>
+<summary><code>import cv2</code> / <code>No module named 'shapely'</code> / <code>requires accelerate</code></summary>
 
-If you find TongGuOCR useful in your research, please cite our paper:
+`bash tools/setup_env.sh` installs all of these. If you install manually,
+follow `requirements/inference.txt` and note that `mmdet 2.25` does not
+declare `shapely`, and the transformers backend needs `accelerate`.
+</details>
+
+<details>
+<summary>mmcv-full 1.7.2 has no wheel for torch 2.10 — what does setup do?</summary>
+
+`tools/setup_env.sh` first looks for a matching wheel in `wheels/`
+(`mmcv_full-1.7.2-cp310-*linux_x86_64.whl`, e.g. one built on another
+sm_86 machine), then falls back to a source build against your local CUDA
+toolkit (`CUDA_HOME`, 5–60 min, cached into `wheels/`).
+</details>
+
+<details>
+<summary>Can I use vLLM 0.18 / a single merged environment?</summary>
+
+No. vLLM 0.18 has a GlmOcr text-stack numeric bug (degenerate repetition
+loops); 0.32 is required and needs torch 2.13, which cannot coexist with the
+mmcv-locked torch 2.10 layout stack. See [docs/vllm.md](docs/vllm.md).
+</details>
+
+<details>
+<summary>Where do the weights go if I have them locally?</summary>
+
+`weights/ocr/` = the full HF model directory (model.safetensors + configs +
+tokenizer), `weights/layout/` = `finetune_infer.pth`. Both paths are relative
+to the repository root and can be overridden via `--config` (see
+[tongguocr/config.py](tongguocr/config.py)).
+</details>
+
+## 📚 Citation
 
 ```bibtex
 @article{zhou2026tongguocr,
@@ -202,10 +191,10 @@ If you find TongGuOCR useful in your research, please cite our paper:
 }
 ```
 
-## License
+## 📄 License
 
-Code in this repository is released under the [Apache License 2.0](LICENSE).
-Third-party attributions (OpenMMLab stack, vendored OmniDocBench) are listed
-in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Model weights are
-distributed separately on Hugging Face under the license stated there; the
+Code is released under the [Apache License 2.0](LICENSE); third-party
+attributions (OpenMMLab stack, vendored OmniDocBench scorer) are listed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Model weights are
+distributed separately on Hugging Face under the license stated there. The
 M5HisDoc and MTHv2 datasets are not redistributed.

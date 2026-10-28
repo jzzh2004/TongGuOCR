@@ -1,186 +1,159 @@
 <div align="center">
-  <img src="website/public/tonggu-logo.png" alt="TongGuOCR 标志" width="120" />
+  <img src="website/public/tonggu-logo.png" alt="TongGuOCR logo" width="120" />
 
   # TongGuOCR
 
-  **面向中文历史文献的布局感知与词元增强 OCR 多模态大语言模型**
+  **面向中文历史文献的版面感知·词元增强 OCR 多模态大模型**
 
   [论文](https://arxiv.org/abs/2608.07917) ·
   [项目主页](https://jzzh2004.github.io/TongGuOCR) ·
-  [在线演示](https://guji-ocr.com)
+  [在线演示](https://guji-ocr.com) ·
+  [模型权重](https://huggingface.co/jzzh2004/TongGuOCR)
 
   [English](README.md) · 简体中文
 </div>
 
-## 新闻
+## 📰 新闻
 
-- **[2026-10-28]** 推理代码与评测套件开源 —— `tongguocr` 包（版面 → 分块 → 识别），AR/CR/NED + 阅读顺序（RO-ED）评测。
-- 模型权重正在 Hugging Face 发布：`jzzh2004/TongGuOCR`。若暂时无法访问，请稍后再试，或参见[权重](#权重)一节的说明。
+- **[2026-10]** 开源推理代码、评测套件与模型权重。
+- **[2026-08]** 论文发布于 arXiv。
 
-## 项目简介
+## 📖 简介
 
-TongGuOCR 是一个面向中文历史文献 OCR 的布局感知与词元增强多模态大语言模型（MLLM），主要解决复杂版面、历史生僻字和非平凡阅读顺序带来的识别难题。
+TongGuOCR 是面向中文历史文献 OCR 的多模态大模型,针对复杂版面、生僻字与非平凡阅读顺序的页面。框架由两个互补组件构成:
 
-该框架包含两个相互配合的核心模块：
+- **版面感知预处理**:旋转文本行检测 + 动态规划分块,把文本行组织为局部连贯的识别块,保留有效上下文的同时抑制跨区域干扰;
+- **词元增强识别**:生僻字获得直接的单字词元表示;行间转移词元(如 `<left|up>`)在解码时显式建模阅读顺序。
 
-- **布局感知预处理（Layout-Aware Preprocessing）**：构建并优化局部连贯的识别块，在保留有效上下文的同时减少不同区域之间的干扰。
-- **词元增强识别（Token-Augmented Recognition）**：为生僻字提供直接的单词元表示，并引入行间跳转词元，引导模型沿复杂阅读路径完成解码。
+<div align="left">
+  <img src="website/public/paper-assets/figures/figure-2.png" alt="TongGuOCR 总览" width="90%">
+</div>
 
-![TongGuOCR 框架概览](website/public/paper-assets/figures/figure-2.png)
+## 📊 实验结果
 
-## 核心特点
+| 基准 | AR ↑ | CR ↑ | NED ↓ | RO-ED ↓ |
+| :--- | ---: | ---: | ---: | ---: |
+| MTHv2 | **97.93** | **98.33** | **2.05** | **1.51** |
+| M5HisDoc | **93.76** | **94.46** | **6.15** | **3.49** |
 
-- **布局感知识别块：** 在复杂历史文献页面中兼顾局部上下文、字符清晰度与阅读顺序。
-- **生僻字词表扩展：** 通过直接的字符级词元缩短难识别历史字形的解码路径。
-- **显式跳转建模：** 无需精确坐标，即可编码文本行之间的粗粒度空间位移。
-- **三阶段适配训练：** 逐步完成历史文献领域知识、高质量监督数据与识别块推理粒度的对齐。
+与对比方法的完整比较见[论文](https://arxiv.org/abs/2608.07917)。本仓库两组后端(transformers 与 vLLM,所有指标差异 ≤ 0.06)的归档复现数值见
+[evaluation/README.md](evaluation/README.md)。
 
-## 仓库结构
+## 🛠️ 环境要求
 
-```
-tongguocr/        Python 包：版面检测、识别块划分、OCR 后端、命令行入口
-evaluation/       AR/CR/NED + 阅读顺序（RO-ED）评测，自成一体
-tools/            环境搭建、权重下载、vLLM 服务、辅助脚本
-requirements/     推理环境依赖锁定文件
-weights/          由 tools/download_weights.sh 填充（不入库）
-website/          项目网站源码
-```
+| | |
+|---|---|
+| 操作系统 | Linux |
+| GPU | NVIDIA,显存 ≥ 16 GB(24 GB 实测),驱动支持 CUDA 12.8(≥ 525.60) |
+| Python | 3.10(setup 脚本自动创建 conda 环境) |
+| PyTorch | 2.10.0(cu128 轮子,自动安装) |
+| transformers | ≥ 5.3.0(原生 `glm_ocr` 支持——必需) |
+| 磁盘 | ~10 GB(权重 ≈ 5 GB + 环境) |
 
-## 安装
-
-需要两个 conda 环境，且无法合并（版面栈锁定 `mmcv-full 1.7.2` →
-torch 2.10 / python 3.10，而 vLLM 0.32 需要 torch 2.13 / python 3.12）：
-
-```bash
-bash tools/setup_env.sh        # `tongguocr`：版面 + transformers OCR（默认后端）
-bash tools/setup_vllm_env.sh   # `tongguocr-vllm2`：vLLM 服务（可选后端）
-```
-
-注意事项：
-
-- **必须 `transformers>=5.3.0`** —— 发布的权重依赖原生 `glm_ocr` 模型类
-  （checkpoint 中无 `auto_map` / 远程代码）。
-- `setup_env.sh` 会按平台安装或从源码构建 `mmcv-full 1.7.2`；源码构建需要
-  `CUDA_HOME` 下的 CUDA 工具链（约 30–60 分钟）。
-- `setup_vllm_env.sh` 自动选择安装路线：NVIDIA 驱动 ≥ 580 → 直接安装 PyPI
-  `vllm==0.32.0`；驱动 575.x → 官方 `+cu129` 轮子（PyPI 的 torch/vllm 轮子
-  链接的是 CUDA 13，在该驱动上无法运行）。
-- **不要对 GlmOcr 模型使用 vLLM 0.18**：其文本栈存在数值 bug，输出会偏离
-  transformers 后端。
-- 若无法访问 pypi.org / huggingface.co，可通过 `PIP_INDEX` / `HF_ENDPOINT`
-  覆盖包索引 / 模型主机（如镜像站）。
-
-## 权重
+## 🚀 安装
 
 ```bash
+git clone https://github.com/jzzh2004/TongGuOCR.git
+cd TongGuOCR
+
+# 1) 权重(或把本地副本放到 weights/ocr 与 weights/layout)
 bash tools/download_weights.sh
-# → weights/ocr/       完整 HF 模型目录（model.safetensors 约 4.7 GB + 配置 + 分词器）
-# → weights/layout/    版面检测器 checkpoint（finetune_infer.pth）
+
+# 2) 环境(~10 分钟;mmcv-full 1.7.2 需编译一次,见 FAQ)
+bash tools/setup_env.sh
+conda activate tongguocr
 ```
 
-可通过 `HF_REPO_ID` 覆盖默认仓库 ID。
+pypi.org 不可达时使用镜像:
+`PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple bash tools/setup_env.sh`;
+权重下载镜像:`HF_ENDPOINT=https://hf-mirror.com`。
 
-## 快速上手
+## 🖼️ 快速上手
 
 ```bash
 conda activate tongguocr
 
-# 页面图像目录 → 识别纯文本
-python -m tongguocr --input-dir <images_dir> --output-dir <output_dir>
+# 页面图像目录 → 每页一个识别文本文件
+python -m tongguocr -i <images_dir> -o output/
 
-# 单张图像
-python -m tongguocr --image <page.jpg> --output-dir <output_dir> --print-result
+# 单页(打印识别结果)
+python -m tongguocr -i <page.jpg> -o output/ --print-result
+
+# 只识别目录中前 10 张
+python -m tongguocr -i <images_dir> -o output/ --limit 10
 ```
 
-（若以 pip 安装本包，`tongguocr` 命令行脚本等价于 `python -m tongguocr`。）
+`output/` 下的输出:
 
-**vLLM 后端**（多页批量更快；与 transformers 后端字节一致）：
+| 路径 | 内容 |
+|---|---|
+| `texts/<page>.txt` | 识别纯文本,一行文本对应一个输出行 |
+| `pages/<page>.json` | 完整页面记录:文本行、块、每块 OCR 文本 |
+| `visuals/<page>.jpg` | 版面 / 分块可视化 |
+| `block_crops/<page>/` | 送入识别器的块裁剪图 |
 
-```bash
-GPU_IDS=0 bash tools/serve_vllm.sh          # 在另一个终端：启动 OpenAI 兼容服务
-python -m tongguocr --input-dir <images_dir> --output-dir <output_dir> --ocr-backend vllm
-```
-
-全部选项见 `python -m tongguocr --help`。运行行为由内置默认值
-（`tongguocr/config.py`）控制，可选的 `--config user.yaml`（YAML/JSON）会
-深合并到默认值上——用户配置只需写出要覆盖的键：
-
-```yaml
-ocr:
-  backend: vllm
-  vllm:
-    api_base: http://127.0.0.1:8090/v1
-```
-
-输出位于 `<output_dir>`：逐页 JSON（`pages/`，含版面、分块、`ocr_text`）、
-识别纯文本（`texts/`）、可视化（`visuals/`）、块裁剪图（`block_crops/`），
-以及运行摘要 `summary.json`。
-
-### 阅读顺序词元与换行
-
-解码时，模型会在文本行之间输出行间跳转关系词元（如 `<left>`、`<down>`、
-`<right|up>` 等，共 24 个——见 `tongguocr/ocr/relation_tokens.py`）。它们是
-模型表达阅读顺序的方式。**推理时每个关系词元都会被转换为换行符**，因此
-`texts/` 中的纯文本已经编码了完整阅读顺序，每行输出对应一个文本行：
+**阅读顺序词元。** 解码过程中,模型在文本行之间输出转移词元(`<down>`、`<left|up>` 等,共 24 个,见
+[tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py))。推理时每个转移词元被转换为换行,因此 `texts/` 中的行序**就是**模型预测的阅读顺序:
 
 ```
 原始解码:  第一行文本<down>第二行文本
-texts/ 文件: 第一行文本⏎第二行文本     （每行输出对应一个文本行）
+texts/ 文件: 第一行文本⏎第二行文本
 ```
 
-其余特殊/控制词元一律剥除。该转换在所有后端中完全一致，且 RO-ED 评测将其
-视为与原始词元流等价的输入。
+### 可选:vLLM 后端
 
-## 评测
-
-评测套件可从一次流水线输出复现论文的四个指标（AR、CR、NED、RO-ED）。RO-ED
-步骤有独立的依赖锁定文件（`evaluation/requirements_eval.txt`，无需 torch）：
+OpenAI 兼容的 vLLM 服务在多页批处理时吞吐更高,且与 transformers 后端指标等价(全量基准差异 ≤ 0.06;探针页逐字节一致)。由于 vLLM 0.32 需要 torch 2.13、而版面栈锁定 torch 2.10,需第二个 conda 环境:
 
 ```bash
-conda activate tongguocr                          # 步骤 1-3（AR/CR/NED）
-
-# RO-ED 步骤：独立的 torch-free 环境，其锁定的 numpy/pandas 不会与
-# 推理环境冲突
-conda create -n tongguocr-eval python=3.10 -y
-conda run -n tongguocr-eval pip install -r evaluation/requirements_eval.txt
-RO_ED_PYTHON="$(conda info --base)/envs/tongguocr-eval/bin/python" \
-./evaluation/run_eval.sh \
-  --dataset   m5 \                                # 或 mthv2
-  --run-dir   <含 texts/ 的流水线输出目录> \
-  --dataset-root /path/to/M5 \                    # 或 MTHv2 数据集根目录
-  --output-dir <评测输出目录>
+bash tools/setup_vllm_env.sh              # 创建 `tongguocr-vllm2`
+GPU_IDS=0 bash tools/serve_vllm.sh        # 终端 1:启动服务
+python -m tongguocr -i <images_dir> -o output/ --backend vllm   # 终端 2
 ```
 
-数据集格式、指标定义、选项（`--skip-ro-ed`、`--match-workers`、`--limit`）
-以及存档运行的期望指标值，见 [evaluation/README.md](evaluation/README.md)。
+细节、驱动相关的安装路线与排障见 [docs/vllm.md](docs/vllm.md)。
 
-## 实验结果
+## 📏 评测
 
-TongGuOCR 在两个中文历史文献 OCR 基准上取得了当前最佳性能。
+评测套件从管线输出目录复现论文四个指标(AR / CR / NED / RO-ED)。M5HisDoc 与 MTHv2 测试集**不随仓库分发**,请指向本地副本:
 
-| 数据集 | AR ↑ | CR ↑ | NED ↓ | RO-ED ↓ |
-| --- | ---: | ---: | ---: | ---: |
-| MTHv2 | **97.93** | **98.33** | **2.05** | **1.51** |
-| M5HisDoc | **93.76** | **94.46** | **6.15** | **3.49** |
+```bash
+./evaluation/run_eval.sh \
+  --dataset m5 \                      # 或 mthv2
+  --run-dir output/ \                 # 含 texts/ 的管线输出目录
+  --dataset-root /path/to/M5 \        # 或 MTHv2 根目录
+  --output-dir eval_out/m5
+```
 
-表中数值与论文一致。本仓库的逐后端全量运行可稳定复现：两个 OCR 后端
-（transformers 与 vLLM）在所有指标上互相差异不超过 0.06，与表中 M5HisDoc
-行的逐后端差异不超过 0.04（与其精确均值的差异不超过 0.01）；MTHv2 行差异
-不超过 0.01。存档运行的精确数值见
+数据集格式、指标定义、参数与归档运行的期望数值见
 [evaluation/README.md](evaluation/README.md)。
-我们做过一次全新端到端复现检验（全新 git 克隆、按 tools/setup_env.sh 与
-evaluation/requirements_eval.txt 重建环境、在与原始运行不同的 GPU 上完成全量
-推理与评测）：结果与存档值的差异均在 bf16 跨硬件数值漂移范围内——M5HisDoc
-AR/CR/NED = 93.74 / 94.44 / 6.17、RO-ED = 0.0346；MTHv2 AR/CR/NED =
-97.93 / 98.32 / 2.05（res.txt 除 Precision +0.01 外逐字节一致）、RO-ED =
-0.0151。页面文本字符级一致率：M5 93%、MTHv2 99.8%；少数差异页仅含 1–2 个
-边缘字形替换。
 
-在更具挑战性的 M5HisDoc 基准上，相较各指标最优的竞争方法，TongGuOCR 将 NED 从 10.43 降低至 6.15，并将 RO-ED 从 7.53 降低至 3.49。完整对比实验、消融研究与定性结果请参阅[论文](https://arxiv.org/abs/2608.07917)和[项目主页](https://jzzh2004.github.io/TongGuOCR)。
+## ❓ 常见问题
 
-## 引用
+<details>
+<summary><code>import cv2</code> / <code>No module named 'shapely'</code> / <code>requires accelerate</code></summary>
 
-如果 TongGuOCR 对你的研究有所帮助，请引用我们的论文：
+`bash tools/setup_env.sh` 会全部装好。手动安装请按 `requirements/inference.txt`;注意 `mmdet 2.25` 未声明 `shapely` 依赖,transformers 后端还需要 `accelerate`。
+</details>
+
+<details>
+<summary>mmcv-full 1.7.2 没有 torch 2.10 的轮子,setup 怎么处理?</summary>
+
+`tools/setup_env.sh` 先在 `wheels/` 里找匹配的轮子(`mmcv_full-1.7.2-cp310-*linux_x86_64.whl`,例如在别的 sm_86 机器上编好的),没有则用本地 CUDA 工具链源码编译(`CUDA_HOME`,5–60 分钟,结果缓存进 `wheels/`)。
+</details>
+
+<details>
+<summary>能否用 vLLM 0.18 / 把两个环境合并成一个?</summary>
+
+不能。vLLM 0.18 存在 GlmOcr 文本栈数值 bug(输出退化为复读循环);必须 0.32,而它需要 torch 2.13,与 mmcv 锁定的 torch 2.10 版面栈无法共存。详见 [docs/vllm.md](docs/vllm.md)。
+</details>
+
+<details>
+<summary>已有本地权重,放在哪里?</summary>
+
+`weights/ocr/` = 完整 HF 模型目录(model.safetensors + 配置 + tokenizer);`weights/layout/` = `finetune_infer.pth`。两个路径均相对仓库根目录,可通过 `--config` 覆盖(见 [tongguocr/config.py](tongguocr/config.py))。
+</details>
+
+## 📚 引用
 
 ```bibtex
 @article{zhou2026tongguocr,
@@ -191,9 +164,7 @@ AR/CR/NED = 93.74 / 94.44 / 6.17、RO-ED = 0.0346；MTHv2 AR/CR/NED =
 }
 ```
 
-## 许可证
+## 📄 许可
 
-本仓库代码以 [Apache License 2.0](LICENSE) 开源。第三方致谢（OpenMMLab
-栈、内嵌的 OmniDocBench）见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-模型权重另行在 Hugging Face 发布，许可以其模型页为准；M5HisDoc 与 MTHv2
-数据集不在本仓库分发范围内。
+代码以 [Apache License 2.0](LICENSE) 开源;第三方声明(OpenMMLab 系、内置的 OmniDocBench 评测器)见
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。模型权重在 Hugging Face 单独发布,许可以其页面为准。M5HisDoc 与 MTHv2 数据集不随仓库分发。
