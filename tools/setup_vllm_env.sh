@@ -5,7 +5,7 @@
 # vLLM 0.32 needs torch 2.13 — the two cannot coexist in one environment.
 # Why vLLM 0.32 and not 0.18: vllm 0.18.0 has a GlmOcr text-stack numeric bug
 # (generations diverge from the transformers backend and can degenerate into
-# repetition loops; details in README.md "Backends"). vLLM 0.32 outputs were
+# repetition loops; details in docs/vllm.md). vLLM 0.32 outputs were
 # verified byte-exact against the transformers backend.
 #
 # Two install routes, selected automatically from the NVIDIA driver version:
@@ -16,7 +16,7 @@
 #     official vllm-0.32.0+cu129 wheel from wheels.vllm.ai (cached in wheels/).
 # Override with VLLM_ROUTE=pypi|cu129.
 #
-# start_vllm_server.sh auto-selects this env's python when present.
+# tools/serve_vllm.sh auto-selects this env's python when present.
 set -euo pipefail
 
 # Minimal URL fetchers: prefer curl, fall back to wget, then python3 (some

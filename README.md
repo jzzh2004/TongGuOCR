@@ -133,10 +133,12 @@ RO-ED) from a pipeline output directory. The M5HisDoc and MTHv2 test sets are
 **not** redistributed; point the script at your local copy:
 
 ```bash
+# --dataset m5 | mthv2; --run-dir = pipeline output containing texts/;
+# --dataset-root = your local M5 or MTHv2 copy
 ./evaluation/run_eval.sh \
-  --dataset m5 \                      # or mthv2
-  --run-dir output/ \                 # pipeline output containing texts/
-  --dataset-root /path/to/M5 \        # or the MTHv2 root
+  --dataset m5 \
+  --run-dir output/ \
+  --dataset-root /path/to/M5 \
   --output-dir eval_out/m5
 ```
 

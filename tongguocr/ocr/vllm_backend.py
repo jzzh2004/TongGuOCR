@@ -52,14 +52,16 @@ def recognize_block_image_vllm(
     config: dict,
 ) -> OcrBlockResult:
     backend_cfg = config["ocr"]["vllm"]
+    # Shared inference profile (ocr.inference) is the single source of truth
+    # for max_tokens / pixel budget / temperature — the same keys the
+    # transformers backend reads — so the two backends cannot drift apart.
+    inference_cfg = config["ocr"]["inference"]
     source_path = Path(masked_crop_path or crop_path)
     if backend_cfg.get("pre_resize", True):
-        image_max_pixels = int(backend_cfg.get("image_max_pixels", 1048576))
-        image_min_pixels = int(backend_cfg.get("image_min_pixels", 1024))
         image_url = encode_prepared_image_to_data_url(
             source_path,
-            image_max_pixels=image_max_pixels,
-            image_min_pixels=image_min_pixels,
+            image_max_pixels=int(inference_cfg["image_max_pixels"]),
+            image_min_pixels=int(inference_cfg["image_min_pixels"]),
         )
     else:
         image_url = encode_image_to_data_url(source_path)
@@ -74,8 +76,8 @@ def recognize_block_image_vllm(
                 ],
             }
         ],
-        "max_tokens": backend_cfg["max_tokens"],
-        "temperature": backend_cfg["temperature"],
+        "max_tokens": int(inference_cfg["max_tokens"]),
+        "temperature": float(inference_cfg["temperature"]),
         # Strips the relation tokens server-side, mirroring the transformers
         # backend's skip_special_tokens=True decode: the line structure of
         # the final text comes from the pipeline's line-count re-split, the

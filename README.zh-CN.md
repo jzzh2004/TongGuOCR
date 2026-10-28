@@ -112,10 +112,12 @@ python -m tongguocr -i <images_dir> -o output/ --backend vllm   # 终端 2
 评测套件从管线输出目录复现论文四个指标(AR / CR / NED / RO-ED)。M5HisDoc 与 MTHv2 测试集**不随仓库分发**,请指向本地副本:
 
 ```bash
+# --dataset m5 | mthv2;--run-dir = 含 texts/ 的管线输出目录;
+# --dataset-root = 本地 M5 或 MTHv2 数据集路径
 ./evaluation/run_eval.sh \
-  --dataset m5 \                      # 或 mthv2
-  --run-dir output/ \                 # 含 texts/ 的管线输出目录
-  --dataset-root /path/to/M5 \        # 或 MTHv2 根目录
+  --dataset m5 \
+  --run-dir output/ \
+  --dataset-root /path/to/M5 \
   --output-dir eval_out/m5
 ```
 

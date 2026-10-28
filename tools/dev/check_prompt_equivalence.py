@@ -55,7 +55,8 @@ def main() -> int:
     from transformers import AutoProcessor
 
     processor = AutoProcessor.from_pretrained(args.model_path, trust_remote_code=True)
-    # Mirror the runtime overrides used by glmocr_block_ocr.py / vllm_backend.py.
+    # Mirror the runtime overrides used by the OCR backends
+    # (tongguocr/ocr/transformers_backend.py / vllm_backend.py).
     setattr(processor, "image_max_pixels", int(args.image_max_pixels))
     setattr(processor, "image_min_pixels", int(args.image_min_pixels))
     setattr(processor, "image_do_pan_and_scan", False)

@@ -1,10 +1,10 @@
-# Unified environment requirements (python 3.10)
-# Install order matters (setup_env.sh does this for you):
+# Inference environment requirements (python 3.10)
+# Install order matters (tools/setup_env.sh does this for you):
 #   1) pip install torch==2.10.0                -> PyPI wheel bundles the cu128 runtime
 #   2) pip install transformers==5.3.0          -> glm_ocr modeling
-#   3) mmcv-full==1.7.2 via local wheel (see setup_env.sh; source-built once, cached in wheels/)
-#   4) pip install -r requirements_unified.txt (this file)
-# vLLM serving is NOT part of this env anymore: use setup_vllm2_env.sh (vllm 0.32).
+#   3) mmcv-full==1.7.2 via local wheel (see tools/setup_env.sh; source-built once, cached in wheels/)
+#   4) pip install -r requirements/inference.txt (this file)
+# vLLM serving is NOT part of this env: use tools/setup_vllm_env.sh (vllm 0.32).
 setuptools==80.10.2
 Cython==3.0.12
 # torchvision MUST be pinned: mmcv-full 1.7.2 declares an unbounded torchvision

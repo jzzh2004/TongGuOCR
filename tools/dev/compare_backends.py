@@ -7,7 +7,9 @@ Compares, per page and per block:
 
 Reports exact-match rates, character error rate (CER, via editdistance),
 block-count mismatches, and the worst diverging examples. Layout/crops are
-expected identical (run both backends with --mode reuse-layout).
+expected identical: run one full pass first, then rerun each backend into
+its own output dir with --skip-layout (copying intermediate/layout/ between
+the two output dirs) so both consume the same layout.
 """
 from __future__ import annotations
 

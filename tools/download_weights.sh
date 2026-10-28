@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 # Download TongGuOCR model weights from Hugging Face Hub into weights/.
 #
-# The HF repository is not published yet; set HF_REPO_ID below (or via env)
-# once it is live. Requires: pip install "huggingface_hub[cli]".
+#   weights/ocr/                     full OCR model dir (model.safetensors +
+#                                    configs + tokenizer)
+#   weights/layout/finetune_infer.pth   layout detector checkpoint
+#                                    (hdc_speed.py ships with the repo)
+#
+# Override the repository id with HF_REPO_ID if you use a mirror/another
+# account. If huggingface.co is unreachable, set HF_ENDPOINT (e.g.
+# https://hf-mirror.com). Alternatively, place a local copy of the weights
+# at the same paths and skip this script (see README FAQ).
 set -euo pipefail
 
-HF_REPO_ID="${HF_REPO_ID:-jzzh2004/TongGuOCR}"   # placeholder until published
+HF_REPO_ID="${HF_REPO_ID:-jzzh2004/TongGuOCR}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OCR_DIR="$ROOT/weights/ocr"
-LAYOUT_DIR="$ROOT/weights/layout"
 
 command -v huggingface-cli >/dev/null 2>&1 || {
   echo "!! huggingface-cli not found. Install it first:  pip install 'huggingface_hub[cli]'"
@@ -16,14 +21,15 @@ command -v huggingface-cli >/dev/null 2>&1 || {
 }
 
 
-echo "==> downloading OCR model (full snapshot) from $HF_REPO_ID -> $OCR_DIR"
+echo "==> downloading OCR model (full snapshot) from $HF_REPO_ID -> $ROOT/weights/ocr"
 huggingface-cli download "$HF_REPO_ID" \
-  --local-dir "$OCR_DIR" --local-dir-use-symlinks False
+  --local-dir "$ROOT/weights/ocr" --local-dir-use-symlinks False
 
-echo "==> downloading layout checkpoint from ${HF_REPO_ID}/layout -> $LAYOUT_DIR"
+# The checkpoint lives at layout/finetune_infer.pth inside the repo; download
+# into weights/ (not weights/layout/) so it lands at weights/layout/finetune_infer.pth.
+echo "==> downloading layout checkpoint from ${HF_REPO_ID}/layout -> $ROOT/weights/layout"
 huggingface-cli download "$HF_REPO_ID" \
   layout/finetune_infer.pth \
-  --local-dir "$LAYOUT_DIR" --local-dir-use-symlinks False
-# hdc_speed.py ships with the repository (it is code, not a weight).
+  --local-dir "$ROOT/weights" --local-dir-use-symlinks False
 
 echo "Done. Weights ready under $ROOT/weights/{ocr,layout}."

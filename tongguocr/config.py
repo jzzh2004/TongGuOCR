@@ -35,9 +35,6 @@ DEFAULTS: dict[str, Any] = {
             "lambda_adj": 2.0,
             "lambda_page": 1.0,
         },
-        "layout": {
-            "layout_axis": "vertical",
-        },
         "candidate_generation": {
             "max_lines_per_block": 62,
             "max_candidates_per_start": 42,
@@ -131,30 +128,27 @@ DEFAULTS: dict[str, Any] = {
         "prompt": "Text Recognition:",
         # Single source of truth shared by ALL OCR backends so that
         # transformers and vLLM always decode with identical settings: same
-        # max_tokens, same pixel budget, greedy decoding, bf16.
+        # max_tokens, same pixel budget, same (greedy) sampling. Both
+        # backends load the model in bfloat16 (hardcoded).
         "inference": {
-            "prompt": "Text Recognition:",
             "max_tokens": 8192,
             "image_max_pixels": 1048576,
             "image_min_pixels": 1024,
             "temperature": 0.0,
-            "dtype": "bfloat16",
         },
         "transformers": {
             "model_path": "./weights/ocr",
             "device": "cuda:0",
         },
+        # Connection settings only for the vLLM client; decoding parameters
+        # come from ocr.inference above.
         "vllm": {
             "api_base": "http://127.0.0.1:8090/v1",
             "model_name": "tonggu-ocr",
             "timeout": 600,
-            "max_tokens": 8192,
-            "temperature": 0.0,
             # Client-side pre-resize (tongguocr/ocr/preprocess.py) so the
             # server receives the same pixel matrix regardless of its
             # processor defaults.
-            "image_max_pixels": 1048576,
-            "image_min_pixels": 1024,
             "pre_resize": True,
         },
     },
@@ -165,7 +159,6 @@ DEFAULTS: dict[str, Any] = {
         "crop_padding": 8,
         "crop_mask": {
             "enabled": True,
-            "fill_color_strategy": "block_non_text_mean",
         },
         "crop_canvas": {
             "mode": "padded_square",

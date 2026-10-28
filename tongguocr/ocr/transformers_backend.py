@@ -18,11 +18,12 @@ from ..models import OcrBlockResult
 from .preprocess import prepare_pil_image
 
 
-_TRANSFORMERS_CACHE: dict[str, tuple[object, object]] = {}
+_TRANSFORMERS_CACHE: dict[tuple[str, str], tuple[object, object]] = {}
 
 
 def _load_transformers_runtime(model_path: str, device: str):
-    cache = _TRANSFORMERS_CACHE.get(model_path)
+    cache_key = (model_path, device)
+    cache = _TRANSFORMERS_CACHE.get(cache_key)
     if cache is not None:
         return cache
 
@@ -36,7 +37,7 @@ def _load_transformers_runtime(model_path: str, device: str):
         low_cpu_mem_usage=True,
         trust_remote_code=True,
     ).eval()
-    _TRANSFORMERS_CACHE[model_path] = (processor, model)
+    _TRANSFORMERS_CACHE[cache_key] = (processor, model)
     return processor, model
 
 

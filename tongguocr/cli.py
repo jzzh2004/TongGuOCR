@@ -22,9 +22,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--backend",
         choices=["transformers", "vllm"],
-        default="transformers",
+        default=None,
         help="OCR backend. 'transformers' runs locally on the GPU; 'vllm' is an "
-        "OpenAI-compatible client for a running vLLM server (see docs/vllm.md).",
+        "OpenAI-compatible client for a running vLLM server (see docs/vllm.md). "
+        "Default: ocr.backend from the config (transformers).",
     )
     parser.add_argument(
         "--device",
