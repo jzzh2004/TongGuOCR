@@ -226,7 +226,7 @@ def segment_page_from_lines(
     return segment_page(
         block_lines,
         image_size,
-        blocking_config=config.get("blocking", {}),
+        config.get("blocking", config),
         page_id=page_id,
         image_path=image_path,
         txt_path=txt_path,
