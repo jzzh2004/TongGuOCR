@@ -146,6 +146,9 @@ DEFAULTS: dict[str, Any] = {
             "api_base": "http://127.0.0.1:8090/v1",
             "model_name": "tonggu-ocr",
             "timeout": 600,
+            # Submit same-page crops together for server-side continuous batching.
+            # Set to 1 for serial requests with the identical decode profile.
+            "concurrency": 4,
             # Client-side pre-resize (tongguocr/ocr/preprocess.py) so the
             # server receives the same pixel matrix regardless of its
             # processor defaults.

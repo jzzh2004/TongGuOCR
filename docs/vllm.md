@@ -75,6 +75,47 @@ The server-side `--mm-processor-kwargs` pixel budget is a backstop; the
 client (`tongguocr/ocr/vllm_backend.py`) pre-resizes every crop to the same
 budget before upload, so both layers always agree.
 
+## Concurrent crops from one page
+
+The client submits a page's block crops concurrently, with up to four
+independent requests in flight (`ocr.vllm.concurrency: 4`). vLLM batches
+these requests on the server. Each crop retains its own image and prompt;
+results are collected in the original block order before page assembly.
+A failed request fails that page instead of dropping a block silently.
+
+Set `ocr.vllm.concurrency: 1` in a `--config` YAML/JSON file to compare with
+serial requests. The image budget, dtype, prompt, greedy decoding, and
+maximum output length are shared by both modes. Changing the batch can
+slightly change bf16 outputs, so compare recognition and reading-order
+metrics when tuning concurrency.
+
+### Measured crop-recognition throughput
+
+On one RTX A6000, vLLM 0.32.0, bf16, greedy decoding, and eager execution,
+a fixed seed-42 sample compared serial requests with concurrency 4 on the
+same saved crops (one untimed warmup request):
+
+| Dataset | Pages / crops | Serial OCR | Concurrent OCR | Speedup | ΔAR | ΔCR | ΔNED | ΔRO-ED ×100 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| M5 | 20 / 50 | 192.31 s | 100.83 s | 1.91× | +0.01 | +0.05 | −0.02 | −0.6087 |
+| MTHv2 | 20 / 43 | 132.81 s | 70.76 s | 1.88× | −0.03 | −0.04 | +0.03 | 0.0000 |
+
+Deltas are concurrent minus serial, in percentage points. Higher AR/CR and
+lower NED/RO-ED are better. M5 BLEU changes by −0.01 pt and MTHv2 by −0.06 pt;
+13/20 and 18/20 page texts respectively remain byte-identical. A page with
+11 crops takes 19.99 s serially and 5.25 s with concurrency 4.
+
+A second control selected the five pages with the most crops from each
+sample. Each page was warmed immediately before both measurements, and
+serial/concurrent execution order alternated. M5 recognition took 66.03 s
+serially versus 25.28 s concurrently (2.61×); MTHv2 took 37.39 s versus
+18.06 s (2.07×). The benefit therefore persists with both modes warm.
+
+These numbers cover recognition, client image preparation, and HTTP;
+layout detection is excluded. Server caches are enabled. This 40-page
+comparison checks that batching has no substantial metric regression on
+the sample; full-dataset validation is reported separately.
+
 ## Troubleshooting
 
 - **Server not reachable / requests time out** — check
