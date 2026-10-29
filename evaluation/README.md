@@ -24,7 +24,7 @@ AR / CR / Edit Distance / F1 / Precision / Recall / BLEU are computed by
   Levenshtein backtrace between GT and prediction:
   `AR = (N - S - D - I) / N`, `CR = (N - S - D) / N` with N = GT length.
 - **NED** is the `Edit Distance` line of `res.txt`: the mean over pages of
-  `nltk.edit_distance(pred, gt) / max(len(pred), len(gt))`. It is an
+  `Levenshtein.distance(pred, gt) / max(len(pred), len(gt), 1)`. It is an
   independent metric, **not** `1 - CR`.
 - **RO-ED** is the reading-order edit distance from `ro_ed/`, computed on
   the **token form** of the predictions (`texts_tokens/`, relation tokens
