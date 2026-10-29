@@ -6,16 +6,20 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # vllm 0.18 — formerly installed in the unified env; fresh builds exclude it — has a GlmOcr text-stack
 # numeric bug: logits diverge from transformers by multiple nats on uncertain
 # positions, generations fork mid-text and degenerate into repetition loops
-# (see README.md). vllm 0.32 fixes it and
+# (see docs/vllm.md). vllm 0.32 fixes it and
 # reproduces the transformers backend byte-exactly. 0.32 also needs torch 2.13,
 # which the mmcv-locked unified env (torch 2.10) cannot host.
-_CONDA_BASE="$(conda info --base 2>/dev/null || echo "$HOME/miniconda")"
+_CONDA_BASE="${CONDA_BASE:-$(conda info --base 2>/dev/null || echo "$HOME/miniconda")}"
 _VLLM_ENV_PY="$_CONDA_BASE/envs/tongguocr-vllm2/bin/python"
 if [[ -z "${PYTHON_BIN:-}" ]]; then
   if [[ -x "$_VLLM_ENV_PY" ]]; then
     PYTHON_BIN="$_VLLM_ENV_PY"
   else
-    PYTHON_BIN="python3"
+    # Fail fast instead of silently falling back to some arbitrary python3
+    # on PATH (it may carry an incompatible vllm — or none at all).
+    echo "!! tongguocr-vllm2 env python not found at: $_VLLM_ENV_PY" >&2
+    echo "   Run tools/setup_vllm_env.sh first, or set CONDA_BASE/PYTHON_BIN." >&2
+    exit 1
   fi
 fi
 MODEL_PATH="${MODEL_PATH:-$ROOT/weights/ocr}"
