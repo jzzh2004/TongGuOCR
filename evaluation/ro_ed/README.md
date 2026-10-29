@@ -81,14 +81,15 @@ important limitation when interpreting the metric as a pure ordering measure.
 
 ## Usage
 
-Input is the single jsonl from `../make_eval_jsonl.py` (rows
-`{page_id, predict, label}`); the pipeline already converted the relation
-tokens to newlines, which the protocol splits on. Usually invoked through
-`../run_eval.sh`; directly:
+Input is the token-form JSONL from `../make_eval_jsonl.py` (rows
+`{page_id, predict, label}`). `../run_eval.sh` builds `predict_tokens.jsonl`
+from the pipeline's `texts_tokens/` directory with `--keep-relation-tokens`;
+the protocol then splits on both relation tokens and newlines. Usually
+invoked through `../run_eval.sh`; directly:
 
 ```bash
 python -m evaluation.ro_ed.ro_ed \
-    --predict-jsonl runs/eval/m5/predict.jsonl \
+    --predict-jsonl runs/eval/m5/predict_tokens.jsonl \
     --work-dir      runs/eval/m5/ro_ed \
     --omnidocbench-root evaluation/third_party/OmniDocBench \
     --workers 12
@@ -104,8 +105,10 @@ The paper's RO-ED values were computed on the archived full-set prediction
 runs: exact recomputation gives **0.0348767895414561** (M5, 1000 pages) and
 **0.015083750445055579** (MTHv2, 800 pages). Re-running the whole pipeline
 end-to-end and evaluating with this module reproduces those values up to the
-generation nondeterminism of a fresh inference run; the relation tokens reach
-this module as newlines (converted at inference, see README.md).
+generation nondeterminism of a fresh inference run. Relation tokens are
+preserved in `texts_tokens/` and the evaluation input; this module converts
+them to line boundaries. The layout-based line splitting in plain `texts/`
+defines different units and does not reproduce the paper's RO-ED numbers.
 
 ## Validation
 

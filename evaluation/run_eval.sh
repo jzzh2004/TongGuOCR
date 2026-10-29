@@ -14,10 +14,9 @@
 #       --output-dir <dir for predict.jsonl / metric.json / res.txt / summary.json> \
 #       [--skip-ro-ed] [--match-workers N] [--limit N]
 #
-# Reading order enters the evaluation through the newline structure of the
-# pipeline texts/ files: the model's relation tokens are converted to
-# newlines at inference time (see README.md), so plain texts/ is
-# all this script needs.
+# Text metrics consume texts/. Reading-order evaluation consumes
+# texts_tokens/, preserving the model's relation tokens until the RO-ED
+# protocol splits on them. Plain-form fallback is reported explicitly.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
