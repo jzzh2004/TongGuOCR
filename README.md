@@ -95,7 +95,8 @@ Outputs under `output/`:
 
 | Path | Content |
 |---|---|
-| `texts/<page>.txt` | recognized plain text, one text line per output line |
+| `texts/<page>.txt` | plain-form text, one output line per detected layout text line |
+| `texts_tokens/<page>.txt` | token form (relation tokens kept; RO-ED input) |
 | `pages/<page>.json` | full page record: lines, blocks, per-block OCR text |
 | `visuals/<page>.jpg` | layout / block visualization |
 | `block_crops/<page>/` | the block crops fed to the recognizer |
@@ -103,12 +104,21 @@ Outputs under `output/`:
 **Reading-order tokens.** While decoding, the model emits transition tokens
 between text lines (`<down>`, `<left|up>`, …; 24 in total — see
 [tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py)) to
-steer generation along the predicted reading path. The pipeline decodes with
-special tokens stripped, so these tokens never appear in the output text;
-instead, `texts/` carries **one output line per detected layout text line**
-(a deterministic re-split at punctuation / even positions), and lines follow
-the page's block reading order. This is exactly the output semantics the
-paper's benchmark numbers were produced under.
+steer generation along the predicted reading path. Each page is written in
+two equivalent forms:
+
+- `texts_tokens/<page>.txt` — **token form**: the raw decode with the
+  relation tokens kept. Line boundaries here are the model's own
+  reading-order predictions; this is the form the paper's RO-ED metric is
+  computed on.
+- `texts/<page>.txt` — **plain form**: relation tokens removed and the text
+  deterministically re-split to one output line per detected layout text
+  line. This is the form of the archived AR/CR/NED/F1/BLEU benchmark texts.
+
+```
+token form:  太眞家眞人無那隱又以滅百魔<left|far_up>宣王時童謡
+plain form:  太眞家眞人無⏎那隱又以滅百⏎魔宣王時童謡   (3 layout lines)
+```
 
 ### Optional: vLLM backend
 

@@ -28,11 +28,13 @@ AR / CR / Edit Distance / F1 / Precision / Recall / BLEU are computed by
   `nltk.edit_distance(pred, gt) / max(len(pred), len(gt))`. It is an
   independent metric, **not** `1 - CR`.
 - **RO-ED** is the reading-order edit distance from `ro_ed/`, computed on
-  the line structure of the predictions. The pipeline emits one output line
-  per detected layout text line (deterministic re-split; the model's 24
-  reading-order relation tokens are stripped at decode time — the protocol
-  accepts raw token streams too, splitting on newlines or relation tokens
-  equivalently).
+  the **token form** of the predictions (`texts_tokens/`, relation tokens
+  kept) — the input form the paper's RO-ED values were defined on. The
+  protocol splits predictions on newlines and the 24 relation tokens;
+  `run_eval.sh` builds `predict_tokens.jsonl` from `texts_tokens/`
+  automatically (and warns + falls back to the plain `texts/` form only if
+  that directory is absent — plain-form RO-ED does NOT reproduce the paper
+  numbers).
 
 ## Dataset formats
 
@@ -65,10 +67,9 @@ RO_ED_PYTHON="$(conda info --base)/envs/tongguocr-eval/bin/python" \
 ./evaluation/run_eval.sh ...          # add --skip-ro-ed to skip step 4
 ```
 
-RO-ED needs no extra pipeline outputs: the newline structure of `texts/`
-already encodes the line segmentation (one output line per detected layout
-text line), so running on a plain pipeline output directory reproduces the
-paper protocol.
+RO-ED needs no extra pipeline outputs: the pipeline already writes the
+token form (`texts_tokens/`) next to `texts/`, so running on a plain
+pipeline output directory reproduces the paper protocol.
 
 ## Expected values (paper runs)
 

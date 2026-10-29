@@ -87,13 +87,22 @@ python -m tongguocr -i <images_dir> -o output/ --limit 10
 
 | 路径 | 内容 |
 |---|---|
-| `texts/<page>.txt` | 识别纯文本,一行文本对应一个输出行 |
+| `texts/<page>.txt` | plain 形态文本,每个输出行对应一个检出的 layout 文本行 |
+| `texts_tokens/<page>.txt` | token 形态(保留 relation token;RO-ED 输入) |
 | `pages/<page>.json` | 完整页面记录:文本行、块、每块 OCR 文本 |
 | `visuals/<page>.jpg` | 版面 / 分块可视化 |
 | `block_crops/<page>/` | 送入识别器的块裁剪图 |
 
 **阅读顺序词元。** 解码过程中,模型在文本行之间输出转移词元(`<down>`、`<left|up>` 等,共 24 个,见
-[tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py)),用以引导生成沿预测阅读路径进行。管线解码时剥离全部特殊词元,因此这些词元不会出现在输出文本中;`texts/` 的行结构由管线按 layout 检出的文本行数**确定性重切**得到(优先在标点处断行),行序跟随页面的块阅读顺序——这正是论文基准数字所用的输出语义。
+[tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py)),用以引导生成沿预测阅读路径进行。每页输出两种等价形态:
+
+- `texts_tokens/<page>.txt` ——**token 形态**:保留 relation token 的原始解码。其行边界即模型自身预测的阅读顺序,论文的 RO-ED 指标在此形态上计算;
+- `texts/<page>.txt` ——**plain 形态**:移除 relation token,并按 layout 检出的文本行数确定性重切(优先在标点处断行)。归档 AR/CR/NED/F1/BLEU 基准文本即此形态。
+
+```
+token 形态:  太眞家眞人無那隱又以滅百魔<left|far_up>宣王時童謡
+plain 形态:  太眞家眞人無⏎那隱又以滅百⏎魔宣王時童謡   (3 个 layout 行)
+```
 
 ### 可选:vLLM 后端
 

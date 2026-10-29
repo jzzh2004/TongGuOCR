@@ -5,19 +5,22 @@ eight single-axis tokens plus sixteen ``<horizontal|vertical>`` combinations.
 During decoding the model emits them between text lines to steer generation
 along its predicted reading path.
 
-The released inference pipeline decodes with ``skip_special_tokens=True``
-(both backends), so these tokens are stripped from the raw output; the line
-structure of ``texts/`` is then recovered by the pipeline's line-count
-re-split (one output line per detected layout text line). This is exactly
-the semantics the released benchmark numbers were produced under. The
-RO-ED evaluation protocol additionally accepts raw token streams: it splits
-predictions on newlines *or* any of the tokens below, treating the two forms
-as equivalent (see evaluation/ro_ed/protocol.py).
+The pipeline writes TWO output forms per page:
+
+- ``texts_tokens/<page>.txt`` — the token form: raw decode with control
+  special tokens removed but the relation tokens kept. Its line boundaries
+  are the model's own reading-order predictions; this is the input form the
+  paper's RO-ED protocol was defined on (evaluation consumes this one).
+- ``texts/<page>.txt`` — the plain form: relation tokens removed (byte-equal
+  to a skip_special_tokens=True decode), then deterministically re-split to
+  one output line per detected layout text line. AR/CR/NED/F1/BLEU are
+  insensitive to this distinction (newlines are stripped by the metric
+  chain); the archived benchmark texts/ files use this form.
 """
 from __future__ import annotations
 
 import re
-from typing import Final
+from typing import Final, Iterable
 
 X_RELATIONS = ("left", "right", "far_left", "far_right")
 Y_RELATIONS = ("up", "down", "far_up", "far_down")
@@ -30,11 +33,57 @@ RELATION_TOKEN_RE: Final = re.compile(
     "|".join(re.escape(token) for token in sorted(RELATION_TOKENS, key=len, reverse=True))
 )
 
+# The remaining special tokens of the final_ocr tokenizer (ids 59246-59281):
+# control/chat tokens that must never appear in recognition output. The
+# backends decode with skip_special_tokens=False (the relation tokens must
+# survive), so these are removed textually afterwards.
+CONTROL_SPECIAL_TOKENS: Final = (
+    "<|endoftext|>",
+    "[MASK]",
+    "[gMASK]",
+    "[sMASK]",
+    "<sop>",
+    "<eop>",
+    "<|system|>",
+    "<|user|>",
+    "<|assistant|>",
+    "<|observation|>",
+    "<|begin_of_image|>",
+    "<|end_of_image|>",
+    "<|end_of_video|>",
+    "<|begin_of_audio|>",
+    "<|end_of_audio|>",
+    "<|begin_of_transcription|>",
+    "<|end_of_transcription|>",
+    "<|code_prefix|>",
+    "<|code_middle|>",
+    "<|code_suffix|>",
+    "/nothink",
+)
+_CONTROL_TOKEN_RE: Final = re.compile(
+    "|".join(re.escape(token) for token in sorted(CONTROL_SPECIAL_TOKENS, key=len, reverse=True))
+)
 
-def relation_tokens_to_newlines(text: str) -> str:
-    """Replace every relation token with a newline (longest match first).
 
-    Not used by the released pipeline (which strips the tokens before this
-    stage); kept as the canonical mapping for consumers of raw token streams.
+def strip_control_tokens(text: str, extra_special_tokens: Iterable[str] = ()) -> str:
+    """Remove control/chat special tokens, KEEPING the relation tokens.
+
+    This yields the token-form output (`texts_tokens/`) whose line boundaries
+    are the model's own reading-order predictions — the input form the paper's
+    RO-ED protocol was defined on.
     """
-    return RELATION_TOKEN_RE.sub("\n", text)
+    text = _CONTROL_TOKEN_RE.sub("", text)
+    for token in extra_special_tokens:
+        if token and token not in RELATION_TOKENS:
+            text = text.replace(token, "")
+    return text
+
+
+def remove_relation_tokens(text: str) -> str:
+    """Delete every relation token (no separator inserted).
+
+    Applied to the token-form text this reproduces, byte for byte, what a
+    skip_special_tokens=True decode yields — the plain form (`texts/`) the
+    released benchmark AR/CR/NED numbers were computed on.
+    """
+    return RELATION_TOKEN_RE.sub("", text)

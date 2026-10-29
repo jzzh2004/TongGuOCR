@@ -16,6 +16,7 @@ def ensure_output_dirs(output_dir: str | Path) -> dict[str, Path]:
         "root": root,
         "pages": root / "pages",
         "texts": root / "texts",
+        "texts_tokens": root / "texts_tokens",
         "block_crops": root / "block_crops",
         "visuals": root / "visuals",
         "logs": root / "logs",

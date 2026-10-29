@@ -176,12 +176,16 @@ def _restore_ocr_block_line_breaks(
     block_entries: list[dict[str, Any]],
 ) -> list[OcrBlockResult]:
     """Best-effort: if a block decode carries fewer newlines than the layout
-    says it has lines, re-split it at punctuation so downstream consumers
-    (e.g. the RO-ED reading-order metric) see one line per output line."""
+    says it has lines, re-split it at punctuation so downstream consumers see
+    one line per output line. Only the plain form is re-split; the token form
+    keeps the model's own reading-order boundaries untouched."""
     block_map = {int(item["block_id"]): item for item in block_entries}
     restored: list[OcrBlockResult] = []
     for item in ocr_blocks:
         block = block_map.get(int(item.block_id), {})
+        token_text = item.ocr_text_tokens
+        if token_text is not None:
+            token_text = token_text.replace("\r\n", "\n").replace("\r", "\n").strip()
         restored.append(
             OcrBlockResult(
                 block_id=item.block_id,
@@ -190,6 +194,7 @@ def _restore_ocr_block_line_breaks(
                 ocr_text=_split_text_by_line_count(item.ocr_text, _target_line_count(block)),
                 backend=item.backend,
                 latency_ms=item.latency_ms,
+                ocr_text_tokens=token_text,
             )
         )
     return restored
@@ -358,6 +363,14 @@ def _finalize_prepared_page(
     ocr_blocks = _restore_ocr_block_line_breaks(ocr_blocks, block_entries)
     ocr_text = _compose_ocr_text(ocr_blocks)
     text_path = write_text_result(output_dirs["texts"], page_id, ocr_text)
+    # Token form: blocks joined by newlines, relation tokens kept as-is.
+    token_texts = [
+        item.ocr_text_tokens.strip()
+        for item in sorted(ocr_blocks, key=lambda item: item.block_id)
+        if item.ocr_text_tokens is not None and item.ocr_text_tokens.strip()
+    ]
+    if token_texts:
+        write_text_result(output_dirs["texts_tokens"], page_id, "\n".join(token_texts))
 
     final_crop_dir = prepared.crop_dir
     if not crop_blocks:

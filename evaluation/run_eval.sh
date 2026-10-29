@@ -90,9 +90,28 @@ if [[ $SKIP_RO_ED -eq 0 ]]; then
     echo "  ${PYTHON} -m pip install -r evaluation/requirements_eval.txt" >&2
     exit 1
   fi
+  # The paper's RO-ED protocol is defined on the token-form predictions
+  # (texts_tokens/: relation tokens kept). Prefer them when present.
+  TOKENS_DIR="$RUN_DIR/texts_tokens"
+  RO_ED_INPUT="$PREDICT"
+  if [[ -d "$TOKENS_DIR" ]]; then
+    RO_ED_INPUT="$OUTPUT_DIR/predict_tokens.jsonl"
+    echo "  building token-form predictions from $TOKENS_DIR"
+    "$PYTHON" "$SCRIPT_DIR/make_eval_jsonl.py" \
+      --dataset "$DATASET" \
+      --texts-dir "$TOKENS_DIR" \
+      --keep-relation-tokens \
+      "$ROOT_FLAG" "$DATASET_ROOT" \
+      --output "$RO_ED_INPUT" \
+      "${LIMIT_ARGS[@]}"
+  else
+    echo "  NOTE: $TOKENS_DIR not found — falling back to plain texts/ form." >&2
+    echo "  RO-ED on the plain form does NOT reproduce the paper numbers" >&2
+    echo "  (the protocol expects the model's relation-token boundaries)." >&2
+  fi
   RO_ED_DIR="$OUTPUT_DIR/ro_ed"
   (cd "$REPO_ROOT" && "$RO_ED_PYTHON" -m evaluation.ro_ed.ro_ed \
-    --predict-jsonl "$PREDICT" \
+    --predict-jsonl "$RO_ED_INPUT" \
     --work-dir "$RO_ED_DIR" \
     --omnidocbench-root "$ODB_ROOT" \
     --workers "$MATCH_WORKERS")

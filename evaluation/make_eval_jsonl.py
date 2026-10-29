@@ -9,14 +9,15 @@ GT conventions (verified against the on-disk datasets):
          line texts joined by '\n'. Staging page ids look like
          `MTH1000__06-V005P0405` (subset__originalname).
 
-Predictions are the pipeline texts/ files, in which the model's reading-order
-relation tokens have already been converted to newlines (see
-README.md), so line breaks encode reading order. Any token that
-still slips through is stripped defensively before comparison; the metric
-chain (transform.py) removes all whitespace anyway.
-
-Output feeds transform.py + calculate_metrics.py (AR/CR/EditDistance/F1/BLEU)
-and evaluation/ro_ed (RO-ED reads the same predict field).
+Two prediction forms exist (see README.md "Reading-order tokens"):
+  texts/         plain form, one output line per detected layout text line;
+                 any residual relation token is stripped defensively. This
+                 feeds transform.py + calculate_metrics.py
+                 (AR/CR/EditDistance/F1/BLEU; whitespace-insensitive anyway).
+  texts_tokens/  token form keeping the model's reading-order relation
+                 tokens. This is the input form the paper's RO-ED protocol
+                 was defined on — pass --keep-relation-tokens with
+                 --texts-dir .../texts_tokens to build that jsonl.
 """
 from __future__ import annotations
 
@@ -28,7 +29,9 @@ from pathlib import Path
 RELATION_TOKEN_RE = re.compile(r"<[a-z_]+(?:\|[a-z_]+)?>")
 
 
-def clean_predict(text: str) -> str:
+def clean_predict(text: str, keep_relation_tokens: bool = False) -> str:
+    if keep_relation_tokens:
+        return text
     return RELATION_TOKEN_RE.sub("", text)
 
 
@@ -80,6 +83,10 @@ def main() -> int:
     parser.add_argument("--output", required=True, help="output jsonl path")
     parser.add_argument("--limit", type=int, default=None,
                         help="only take the first N staged pages (smoke runs)")
+    parser.add_argument("--keep-relation-tokens", action="store_true",
+                        help="keep the relation tokens in the predict field "
+                             "(use with --texts-dir .../texts_tokens; the RO-ED "
+                             "protocol splits on them)")
     args = parser.parse_args()
 
     if not (args.m5_root if args.dataset == "m5" else args.mthv2_root):
@@ -100,7 +107,7 @@ def main() -> int:
         if label is None:
             missing_gt.append(page_id)
             continue
-        predict = clean_predict(path.read_text(encoding="utf-8"))
+        predict = clean_predict(path.read_text(encoding="utf-8"), args.keep_relation_tokens)
         records.append({"page_id": page_id, "predict": predict, "label": label})
 
     out = Path(args.output)

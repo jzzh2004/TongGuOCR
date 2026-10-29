@@ -11,6 +11,7 @@ import requests
 
 from ..models import OcrBlockResult
 from .preprocess import prepare_pil_image
+from .relation_tokens import remove_relation_tokens, strip_control_tokens
 
 
 _THREAD_LOCAL = threading.local()
@@ -78,11 +79,10 @@ def recognize_block_image_vllm(
         ],
         "max_tokens": int(inference_cfg["max_tokens"]),
         "temperature": float(inference_cfg["temperature"]),
-        # Strips the relation tokens server-side, mirroring the transformers
-        # backend's skip_special_tokens=True decode: the line structure of
-        # the final text comes from the pipeline's line-count re-split, the
-        # semantics the released benchmark numbers were produced under.
-        "skip_special_tokens": True,
+        # Keep special tokens server-side so the relation tokens survive;
+        # both output forms are derived client-side below, mirroring the
+        # transformers backend exactly.
+        "skip_special_tokens": False,
     }
     start = time.perf_counter()
     session = getattr(_THREAD_LOCAL, "session", None)
@@ -96,13 +96,16 @@ def recognize_block_image_vllm(
     )
     response.raise_for_status()
     data = response.json()
-    text = data["choices"][0]["message"]["content"]
+    raw = data["choices"][0]["message"]["content"]
+    token_text = strip_control_tokens(raw)
+    plain_text = remove_relation_tokens(token_text)
     latency_ms = (time.perf_counter() - start) * 1000.0
     return OcrBlockResult(
         block_id=block_id,
         crop_path=str(crop_path),
         masked_crop_path=str(masked_crop_path) if masked_crop_path else None,
-        ocr_text=text,
+        ocr_text=plain_text,
         backend="vllm",
         latency_ms=latency_ms,
+        ocr_text_tokens=token_text,
     )
