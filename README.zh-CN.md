@@ -118,9 +118,11 @@ python -m tongguocr -i <images_dir> -o output/ --backend vllm   # 终端 2
 
 ## 📏 评测
 
-评测套件从管线输出目录复现论文四个指标(AR / CR / NED / RO-ED)。M5HisDoc 与 MTHv2 测试集**不随仓库分发**,请指向本地副本:
+全部指标通过 `evaluation/calculate_metrics.py` 统一计算，RO-ED 使用独立的本地匹配代码，无需 OmniDocBench 或额外评测环境。M5HisDoc 与 MTHv2 测试集**不随仓库分发**,请指向本地副本:
 
 ```bash
+python -m pip install -r evaluation/requirements_eval.txt
+
 # --dataset m5 | mthv2;--run-dir = 含 texts/ 的管线输出目录;
 # --dataset-root = 本地 M5 或 MTHv2 数据集路径
 ./evaluation/run_eval.sh \
@@ -172,5 +174,5 @@ python -m tongguocr -i <images_dir> -o output/ --backend vllm   # 终端 2
 
 ## 📄 许可
 
-代码以 [Apache License 2.0](LICENSE) 开源;第三方声明(OpenMMLab 系、内置的 OmniDocBench 评测器)见
+代码以 [Apache License 2.0](LICENSE) 开源;第三方声明(OpenMMLab 系、独立 RO-ED 匹配代码)见
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。模型权重在 Hugging Face 单独发布,许可以其页面为准。M5HisDoc 与 MTHv2 数据集不随仓库分发。

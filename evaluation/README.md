@@ -8,12 +8,11 @@ F1 / BLEU) plus the RO-ED reading-order metric, from one entry script.
 | `run_eval.sh` | single entry point; runs all steps below |
 | `make_eval_jsonl.py` | joins pipeline `texts/` with dataset GT into `predict.jsonl` |
 | `transform.py` | converts predict.jsonl into the metric input format (`metric.json`) |
-| `calculate_metrics.py` | computes the metrics; writes the `res.txt` report |
-| `eval_summary.py` | collects `res.txt` + RO-ED result into `summary.json` |
-| `ro_ed/` | RO-ED reading-order evaluation (see `ro_ed/README.md`) |
-| `third_party/OmniDocBench/` | vendored OmniDocBench scorer used by RO-ED |
+| `calculate_metrics.py` | computes all metrics, including standalone RO-ED; writes `res.txt` and `summary.json` |
+| `eval_summary.py` | compatibility utility for collecting historical reports |
+| `ro_ed/` | local text-line matching and RO-ED helpers (see `ro_ed/README.md`) |
 | `tests/` | unit tests for the RO-ED protocol adapter |
-| `requirements_eval.txt` | python deps for the RO-ED part (torch-free) |
+| `requirements_eval.txt` | small CPU-only dependencies for all metrics |
 
 ## Metrics
 
@@ -50,21 +49,28 @@ redistributed here):
 ## Usage
 
 ```bash
-# AR/CR/NED/F1/BLEU need the inference env (calculate_metrics imports torch):
+# The inference env can run all metrics, including RO-ED.
 conda activate tongguocr
+python -m pip install -r evaluation/requirements_eval.txt
 
 ./evaluation/run_eval.sh \
   --dataset m5 \
-  --run-dir  <pipeline output containing texts/> \
+  --run-dir  <pipeline output containing texts/ and texts_tokens/> \
   --dataset-root /path/to/M5 \
   --output-dir runs/eval/m5
 
-# RO-ED step: torch-free deps in a SEPARATE env (its pinned numpy/pandas
-# must not downgrade the inference stack), selected via RO_ED_PYTHON:
-conda create -n tongguocr-eval python=3.10 -y
-conda run -n tongguocr-eval pip install -r evaluation/requirements_eval.txt
-RO_ED_PYTHON="$(conda info --base)/envs/tongguocr-eval/bin/python" \
-./evaluation/run_eval.sh ...          # add --skip-ro-ed to skip step 4
+# One Python entry point, useful for existing metric.json + raw predictions:
+python evaluation/calculate_metrics.py \
+  --input_path runs/eval/m5/metric.json \
+  --ro-ed-input runs/eval/m5/predict_tokens.jsonl \
+  --output_path runs/eval/m5/res.txt \
+  --summary-json runs/eval/m5/summary.json \
+  --ro-ed-output runs/eval/m5/ro_ed
+
+# Add --skip-ro-ed to run_eval.sh for character metrics only.
+# Add --ro-ed-only to calculate_metrics.py to score reading order only.
+# Neither torch nor transformers is required for evaluation. A CPU-only env
+# with requirements_eval.txt also works; no second environment is needed.
 ```
 
 RO-ED needs no extra pipeline outputs: the pipeline already writes the
@@ -96,3 +102,20 @@ Notes:
 - Fresh-clone reproduction check (2026-10-28, different GPU, rebuilt envs):
   AR/CR/NED within 0.01 pt of the table above (M5 CR 94.44; MTHv2 identical
   except Precision 98.07), RO-ED 0.03463 / 0.01511 — i.e. 3.46 / 1.51.
+
+
+## Standalone RO-ED validation
+
+The OmniDocBench framework has been removed from this repository. Only its
+text-matching decisions, normalization, and order-pairing logic were adapted
+into local helpers, retaining their Apache-2.0 attribution and license.
+`calculate_metrics.py` exposes `cal_ro_ed()` and writes RO-ED in the same
+report as AR/CR/NED/F1/BLEU. Line-sensitive input remains separate from the
+character-metric transform, which removes newlines by design.
+
+The standalone implementation was checked on all 1800 archived paper pages:
+GT order IDs, predicted order IDs, and per-page edit distances are identical
+to the previous scorer. Aggregate values are exactly 0.0348767895414561
+(M5) and 0.015083750445055579 (MTHv2), with no timeout fallbacks. These
+checks also pass with the inference environment's newer NumPy/SciPy stack.
+The old NumPy/Pandas pins and the extra evaluation environment are unnecessary.

@@ -18,20 +18,24 @@ downloads or builds `mmcv-full` from source as appropriate for your platform.
 `tools/patch_openmmlab.py` applies small compatibility patches for newer
 PyTorch versions.
 
-## OmniDocBench (Apache-2.0), vendored
+## RO-ED text matcher (Apache-2.0), adapted from OmniDocBench
 
-`evaluation/third_party/OmniDocBench/` contains an unmodified subset (source
-tree + license + packaging metadata) of OmniDocBench:
+`evaluation/ro_ed/{matching,normalize,reading_order}.py` retain and adapt the
+text-line matching, normalization, timeout fallback, and order-pairing logic
+from OmniDocBench. The general dataset/metric framework, formula/table
+scorers, registries, Markdown parser, and other vendored modules are removed.
 
 - Upstream: https://github.com/opendatalab/OmniDocBench — Apache-2.0
-- Vendored revision: `be7a44d371e43801fabd2e31e02976f106b6aa16` (2026-04-10, "sync: align codebase with local v1.6") (pinned by matching
-  `src/dataset/end2end_dataset.py` against upstream history)
-- Only the metric engine surface used by the RO-ED evaluation is vendored;
-  upstream demo data, assets, and result directories are omitted.
+- Source revision: `be7a44d371e43801fabd2e31e02976f106b6aa16`
+- Copyright: OpenDataLab; original Apache-2.0 license retained at
+  `evaluation/ro_ed/LICENSE`.
+- TongGuOCR provides the standalone driver, token-boundary protocol,
+  diagnostics, integration with `calculate_metrics.py`, and tests.
 
-The reading-order evaluation (RO-ED) reuses OmniDocBench's text matching and
-edit-distance machinery; see `evaluation/ro_ed/README.md` for the protocol and
-`evaluation/README.md` for how the vendored tree is invoked.
+The extraction was checked against the archived M5 (1000 pages) and MTHv2
+(800 pages) runs: every page's GT order sequence, predicted order sequence,
+and edit distance is identical. The full OmniDocBench tree is not required
+at installation or runtime.
 
 ## Evaluation metric scripts
 

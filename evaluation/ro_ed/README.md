@@ -2,13 +2,14 @@
 
 ## Scope
 
-The evaluation uses the OmniDocBench implementation of text matching,
-reading-order pairing, and `Edit_dist` (vendored, unmodified, at
-`../third_party/OmniDocBench`). Only the input adaptation is changed:
-predictions are supplied as plain text blocks instead of being reparsed as
-Markdown. This prevents real OCR characters such as `||` from being
-interpreted as table syntax.
+TongGuOCR computes RO-ED with local text-only matching and order-pairing
+helpers. They are adapted from the Apache-2.0 OmniDocBench implementation;
+see `../../THIRD_PARTY_NOTICES.md` and `LICENSE`. The OmniDocBench checkout,
+dataset registry, general metric engine, Markdown parser, formula/table
+scorers, and their dependencies are not used.
 
+`../calculate_metrics.py` provides the public `cal_ro_ed()` function and
+computes this metric alongside the text-recognition metrics.
 The reported value is `reading_order / all / Edit_dist / ALL_page_avg`
 (lower is better). The paper reports it multiplied by 100 (3.49 for M5,
 1.51 for MTHv2).
@@ -36,9 +37,8 @@ retained as text and counted in diagnostics. `</mm:think>` becomes a boundary
 while all recognition content before and after it is retained.
 
 The exact machine-readable rules live in `protocol.py`; each run directory
-records `protocol.json` (spec + hash). `ro_ed.py` refuses to run if the
-protocol hash differs from the one the paper's numbers were produced under
-(`ff195d9b…`, asserted at startup and pinned by a unit test).
+records `protocol.json` (spec + hash). The protocol hash (`ff195d9b…`) is recorded in each summary and pinned by
+a regression test against the paper protocol.
 
 ## Content matching
 
@@ -46,11 +46,11 @@ For every page, each GT line is constructed as an OmniDocBench `text_block`
 with an integer `order` starting at 1. Every normalized prediction line is
 directly constructed as a plain `text_all`/`text_block` item in file order.
 The adapter therefore bypasses `md_tex_filter()` semantics while retaining the
-official dataset pipeline.
+archived text-only matching rules.
 
 OmniDocBench normalizes line content with `normalized_text()`, which converts
 text and keeps word characters (Chinese characters, letters, digits, and other
-regex word characters). Its official `quick_match` then associates GT and
+regex word characters). The retained `quick_match` then associates GT and
 prediction lines by normalized content. The matcher supports merged/truncated
 line associations and uses edit-distance costs with Hungarian/fuzzy matching.
 Timeout fallback counts are recorded in every `summary.json`.
@@ -88,16 +88,18 @@ the protocol then splits on both relation tokens and newlines. Usually
 invoked through `../run_eval.sh`; directly:
 
 ```bash
-python -m evaluation.ro_ed.ro_ed \
-    --predict-jsonl runs/eval/m5/predict_tokens.jsonl \
-    --work-dir      runs/eval/m5/ro_ed \
-    --omnidocbench-root evaluation/third_party/OmniDocBench \
-    --workers 12
+python evaluation/calculate_metrics.py \
+    --ro-ed-only \
+    --ro-ed-input runs/eval/m5/predict_tokens.jsonl \
+    --ro-ed-output runs/eval/m5/ro_ed \
+    --match-workers 12
 ```
 
-Requires the dependencies in `../requirements_eval.txt` (torch-free). The
-result is `summary.json` inside `--work-dir` (`ALL_page_avg` is the headline
-number).
+Install `../requirements_eval.txt` into the same environment used for the
+other metrics. No torch, transformers, Pandas, or OmniDocBench is required.
+`summary.json` stores the aggregate score and protocol hash; `per_page.json`
+stores the matched GT/predicted sequences and score of every page. The old
+`python -m evaluation.ro_ed.ro_ed` command remains a compatibility wrapper.
 
 ## Reproducing the paper numbers
 
@@ -117,3 +119,7 @@ and inline tags, repeated `</mm:think>`, `<|ref|>/<|det|>` metadata, comments,
 unknown tags, real `|/#` characters, space removal, Markdown-link unwrapping,
 the literal-`||` regression (no Markdown table object is ever created), and
 the protocol hash pin.
+
+All 1800 archived M5/MTHv2 pages were checked against the previous framework:
+GT order sequences, predicted order sequences, per-page scores, and both
+aggregate paper values are identical (zero timeout fallbacks).

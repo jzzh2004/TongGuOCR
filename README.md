@@ -138,8 +138,11 @@ Details, driver-specific install routes, and troubleshooting:
 
 ## 📏 Evaluation
 
-The evaluation suite reproduces the paper's four metrics (AR / CR / NED /
-RO-ED) from a pipeline output directory. The M5HisDoc and MTHv2 test sets are
+The evaluation suite computes the paper's four metrics (AR / CR / NED /
+RO-ED) through `evaluation/calculate_metrics.py`, using local standalone
+RO-ED helpers. Install `evaluation/requirements_eval.txt` in the inference
+environment; the OmniDocBench framework and a second evaluation env are
+unnecessary. Metrics are computed from a pipeline output directory. The M5HisDoc and MTHv2 test sets are
 **not** redistributed; point the script at your local copy:
 
 ```bash
@@ -205,7 +208,7 @@ to the repository root and can be overridden via `--config` (see
 ## 📄 License
 
 Code is released under the [Apache License 2.0](LICENSE); third-party
-attributions (OpenMMLab stack, vendored OmniDocBench scorer) are listed in
+attributions (OpenMMLab stack, adapted RO-ED text matcher) are listed in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Model weights are
 distributed separately on Hugging Face under the license stated there. The
 M5HisDoc and MTHv2 datasets are not redistributed.
