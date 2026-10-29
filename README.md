@@ -43,8 +43,8 @@ reading orders. It combines two components:
 | M5HisDoc | **93.76** | **94.46** | **6.15** | **3.49** |
 
 Full comparisons with competing methods are in the [paper](https://arxiv.org/abs/2608.07917).
-Per-backend archived runs of this repository (transformers and vLLM agree
-within 0.06 pts on every metric) are listed in
+Per-backend archived runs of this repository (the archived serial transformers and vLLM
+runs agree within 0.06 pts on the text-recognition metrics) are listed in
 [evaluation/README.md](evaluation/README.md).
 
 ## 🛠️ Requirements
@@ -122,9 +122,11 @@ plain form:  太眞家眞人無⏎那隱又以滅百⏎魔宣王時童謡   (3 l
 
 ### Optional: vLLM backend
 
-An OpenAI-compatible vLLM server gives higher multi-page throughput and is
-metric-equivalent to the transformers backend (verified within 0.06 pts on
-full benchmarks; byte-identical on probe pages). It needs a second conda env
+An OpenAI-compatible vLLM server processes same-page block crops concurrently.
+Concurrency 4 measured about 1.9× faster crop recognition than serial
+requests on a 40-page sample, with small text-metric changes (at most
+0.06 pt) and no reading-order regression. See the measured results in
+[docs/vllm.md](docs/vllm.md). It needs a second conda env
 because vLLM 0.32 requires torch 2.13 while the layout stack pins torch 2.10:
 
 ```bash

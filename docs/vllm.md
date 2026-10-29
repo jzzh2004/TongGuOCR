@@ -6,10 +6,11 @@ the layout stack running in the `tongguocr` env and sends only the block
 crops to a running vLLM server, which batches them and is faster on
 multi-page runs.
 
-**Accuracy.** The two backends are metric-equivalent: on the full M5HisDoc
-(1000 pages) and MTHv2 (800 pages) benchmarks every metric agrees within
-0.06 pts, and on probe pages the outputs are byte-identical. Use either for
-evaluation; use vLLM when throughput matters.
+**Accuracy.** Archived serial runs of the two backends agree within
+0.06 pts on AR/CR/NED/F1/BLEU over the full M5HisDoc (1000 pages) and MTHv2
+(800 pages) benchmarks. The default client now batches same-page crops;
+its measured speed and metric comparison are listed below. Changes in
+batching can change individual characters through bf16 numeric differences.
 
 ## Why a second environment (and why vLLM 0.18 is not an option)
 
@@ -129,5 +130,5 @@ the sample; full-dataset validation is reported separately.
 - **OOM on the layout side** — lower `GPU_MEMORY_UTILIZATION` (0.55 is the
   tested same-card value on 24 GB / 48 GB GPUs).
 - **Different GPU than the archived runs** — bf16 cross-hardware drift of
-  ±0.02–0.06 pts on the benchmark metrics is normal; page texts are usually
-  character-identical (>93% of pages in the archived cross-GPU check).
+  ±0.02–0.06 pts on the benchmark metrics is normal; the archived fresh-environment HF check
+  preserved exact page text on 922/1000 M5 and 788/800 MTHv2 pages.

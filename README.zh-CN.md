@@ -106,7 +106,10 @@ plain 形态:  太眞家眞人無⏎那隱又以滅百⏎魔宣王時童謡   (3
 
 ### 可选:vLLM 后端
 
-OpenAI 兼容的 vLLM 服务在多页批处理时吞吐更高,且与 transformers 后端指标等价(全量基准差异 ≤ 0.06;探针页逐字节一致)。由于 vLLM 0.32 需要 torch 2.13、而版面栈锁定 torch 2.10,需第二个 conda 环境:
+vLLM 后端会并发提交同一页切出的多个块，由服务端批处理；默认并发数为 4。
+在固定的 40 页样本上，块识别比串行请求约快 1.9 倍，文本指标变化不超过
+0.06 个百分点，RO-ED 未退化。实测条件及串行配置见 [docs/vllm.md](docs/vllm.md)。
+vLLM 需要独立环境（vLLM 0.32 使用 torch 2.13，布局栈使用 torch 2.10）：
 
 ```bash
 bash tools/setup_vllm_env.sh              # 创建 `tongguocr-vllm2`
