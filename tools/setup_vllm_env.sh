@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 # Create the vLLM serving env `tongguocr-vllm2`.
 #
-# Why a separate env: mmcv-full 1.7.2 (layout stack) locks torch 2.10, while
-# vLLM 0.32 needs torch 2.13 — the two cannot coexist in one environment.
-# Why vLLM 0.32 and not 0.18: vllm 0.18.0 has a GlmOcr text-stack numeric bug
-# (generations diverge from the transformers backend and can degenerate into
-# repetition loops; details in docs/vllm.md). vLLM 0.32 outputs were
-# verified byte-exact against the transformers backend.
+# The layout extension in the main environment is compiled for torch 2.10.
+# The tested serving stack uses vLLM 0.32 with torch 2.13 in a separate env.
+# tools/serve_vllm.sh selects this environment automatically.
 #
 # Two install routes, selected automatically from the NVIDIA driver version:
 #   - driver >= 580: plain `pip install vllm==0.32.0` (PyPI wheel, CUDA 13).

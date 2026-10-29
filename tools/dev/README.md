@@ -1,5 +1,7 @@
 # Developer tools
 
+[简体中文](README.zh-CN.md)
+
 Small utilities used while producing and validating the release; not needed
 for inference or evaluation.
 

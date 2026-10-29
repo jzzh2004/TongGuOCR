@@ -1,5 +1,7 @@
 # Third-Party Notices
 
+[简体中文](THIRD_PARTY_NOTICES.zh-CN.md)
+
 This repository is licensed under the Apache License 2.0 (see [LICENSE](LICENSE)).
 This file collects attribution and licensing information for third-party
 components used by or included in this repository.

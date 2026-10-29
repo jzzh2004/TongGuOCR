@@ -15,7 +15,7 @@
 
 ## 📰 新闻
 
-- **[2026-10]** 开源推理代码、评测套件与模型权重。
+- **[2026-10]** 提供推理代码与评测工具。
 - **[2026-08]** 论文发布于 arXiv。
 
 ## 📖 简介
@@ -36,135 +36,77 @@ TongGuOCR 是面向中文历史文献 OCR 的多模态大模型,针对复杂版�
 | MTHv2 | **97.93** | **98.33** | **2.05** | **1.51** |
 | M5HisDoc | **93.76** | **94.46** | **6.15** | **3.49** |
 
-与对比方法的完整比较见[论文](https://arxiv.org/abs/2608.07917)。本仓库两组后端(transformers 与 vLLM,所有指标差异 ≤ 0.06)的归档复现数值见
-[evaluation/README.md](evaluation/README.md)。
+完整比较见[论文](https://arxiv.org/abs/2608.07917)。
 
-## 🛠️ 环境要求
+## 安装
 
-| | |
-|---|---|
-| 操作系统 | Linux |
-| GPU | NVIDIA,显存 ≥ 16 GB(24 GB 实测),驱动支持 CUDA 12.8(≥ 525.60) |
-| Python | 3.10(setup 脚本自动创建 conda 环境) |
-| PyTorch | 2.10.0(cu128 轮子,自动安装) |
-| transformers | ≥ 5.3.0(原生 `glm_ocr` 支持——必需) |
-| 磁盘 | ~10 GB(权重 ≈ 5 GB + 环境) |
-
-## 🚀 安装
+已验证的软件组合：Linux、Python 3.10、PyTorch 2.10.0（CUDA 12.8）、
+Transformers 5.3.0，以及支持 bf16 的 NVIDIA GPU。安装脚本会配置这些依赖。
+NVIDIA 驱动需兼容所用 CUDA 运行时；本次测试使用驱动 575.64 和 RTX A6000。
+显存占用取决于图像大小和后端，目前尚未确定最低显存要求。
+权重、主环境及安装文件建议预留约 20 GB 磁盘空间；可选 vLLM 环境另需空间。
 
 ```bash
 git clone https://github.com/jzzh2004/TongGuOCR.git
 cd TongGuOCR
-
-# 1) 权重(或把本地副本放到 weights/ocr 与 weights/layout)
-bash tools/download_weights.sh
-
-# 2) 环境(~10 分钟;mmcv-full 1.7.2 需编译一次,见 FAQ)
 bash tools/setup_env.sh
 conda activate tongguocr
 ```
 
-pypi.org 不可达时使用镜像:
-`PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple bash tools/setup_env.sh`;
-权重下载镜像:`HF_ENDPOINT=https://hf-mirror.com`。
+将 OCR 模型放在 `weights/ocr/`，检测权重放在
+`weights/layout/finetune_infer.pth`。Hugging Face 权重地址暂为发布占位；
+权重上线后可使用 `tools/download_weights.sh` 下载。
 
-## 🖼️ 快速上手
+检测器使用编译后的 `mmcv-full` 扩展。安装脚本优先使用 `wheels/` 中的兼容轮子，
+否则通过本地 CUDA 工具链编译，源码编译可能需要数分钟。
+包下载镜像可通过 `PIP_INDEX` 设置，权重镜像可通过 `HF_ENDPOINT` 设置。
+
+## 识别
 
 ```bash
-conda activate tongguocr
-
-# 页面图像目录 → 每页一个识别文本文件
 python -m tongguocr -i <images_dir> -o output/
-
-# 单页(打印识别结果)
 python -m tongguocr -i <page.jpg> -o output/ --print-result
-
-# 只识别目录中前 10 张
-python -m tongguocr -i <images_dir> -o output/ --limit 10
+# 可选：--limit 10、--no-visualize、--config config.yaml
 ```
 
-`output/` 下的输出:
+| 输出 | 内容 |
+| --- | --- |
+| `texts/<page>.txt` | 识别文本；24 个 relation token 均替换为换行 |
+| `pages/<page>.json` | 版面、分块、识别文本和每块原始解码 |
+| `visuals/<page>.jpg` | 版面和分块可视化 |
+| `block_crops/<page>/` | 送入识别器的裁剪图 |
 
-| 路径 | 内容 |
-|---|---|
-| `texts/<page>.txt` | plain 形态文本,每个输出行对应一个检出的 layout 文本行 |
-| `texts_tokens/<page>.txt` | token 形态(保留 relation token;RO-ED 输入) |
-| `pages/<page>.json` | 完整页面记录:文本行、块、每块 OCR 文本 |
-| `visuals/<page>.jpg` | 版面 / 分块可视化 |
-| `block_crops/<page>/` | 送入识别器的块裁剪图 |
+例如，`甲乙<left|up>丙丁` 转换为 `甲乙\n丙丁`。
+换行直接来自模型输出，不再按检测行数或标点重新切分文本。
 
-**阅读顺序词元。** 解码过程中,模型在文本行之间输出转移词元(`<down>`、`<left|up>` 等,共 24 个,见
-[tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py)),用以引导生成沿预测阅读路径进行。每页输出两种等价形态:
-
-- `texts_tokens/<page>.txt` ——**token 形态**:保留 relation token 的原始解码。其行边界即模型自身预测的阅读顺序,论文的 RO-ED 指标在此形态上计算;
-- `texts/<page>.txt` ——**plain 形态**:移除 relation token,并按 layout 检出的文本行数确定性重切(优先在标点处断行)。归档 AR/CR/NED/F1/BLEU 基准文本即此形态。
-
-```
-token 形态:  太眞家眞人無那隱又以滅百魔<left|far_up>宣王時童謡
-plain 形态:  太眞家眞人無⏎那隱又以滅百⏎魔宣王時童謡   (3 个 layout 行)
-```
-
-### 可选:vLLM 后端
-
-vLLM 后端会并发提交同一页切出的多个块，由服务端批处理；默认并发数为 4。
-在固定的 40 页样本上，块识别比串行请求约快 1.9 倍，文本指标变化不超过
-0.06 个百分点，RO-ED 未退化。实测条件及串行配置见 [docs/vllm.md](docs/vllm.md)。
-vLLM 需要独立环境（vLLM 0.32 使用 torch 2.13，布局栈使用 torch 2.10）：
+### 可选 vLLM 后端
 
 ```bash
-bash tools/setup_vllm_env.sh              # 创建 `tongguocr-vllm2`
-GPU_IDS=0 bash tools/serve_vllm.sh        # 终端 1:启动服务
-python -m tongguocr -i <images_dir> -o output/ --backend vllm   # 终端 2
+bash tools/setup_vllm_env.sh
+GPU_IDS=0 bash tools/serve_vllm.sh  # 终端 1
+python -m tongguocr -i <images_dir> -o output/ --backend vllm  # 终端 2
 ```
 
-细节、驱动相关的安装路线与排障见 [docs/vllm.md](docs/vllm.md)。
+同一页的全部裁剪图通过一次批量请求提交，每个裁剪图对应独立会话，
+由 vLLM 在服务端调度。配置和显存设置见 [vLLM 使用说明](docs/vllm.zh-CN.md)。
 
-## 📏 评测
-
-全部指标通过 `evaluation/calculate_metrics.py` 统一计算，RO-ED 使用独立的本地匹配代码，无需 OmniDocBench 或额外评测环境。M5HisDoc 与 MTHv2 测试集**不随仓库分发**,请指向本地副本:
+## 评测
 
 ```bash
 python -m pip install -r evaluation/requirements_eval.txt
-
-# --dataset m5 | mthv2;--run-dir = 含 texts/ 的管线输出目录;
-# --dataset-root = 本地 M5 或 MTHv2 数据集路径
-./evaluation/run_eval.sh \
+bash evaluation/run_eval.sh \
   --dataset m5 \
   --run-dir output/ \
   --dataset-root /path/to/M5 \
   --output-dir eval_out/m5
 ```
 
-数据集格式、指标定义、参数与归档运行的期望数值见
-[evaluation/README.md](evaluation/README.md)。
+AR、CR、NED、F1、Precision、Recall、BLEU 和 RO-ED 使用同一份识别文本，
+统一写入 **`eval_out/m5/metrics.json`**。MTHv2 使用 `--dataset mthv2`。
+评测可直接使用推理环境，也可以使用 CPU 环境。
+数据集格式和指标定义见[评测说明](evaluation/README.zh-CN.md)，数据集不随仓库分发。
 
-## ❓ 常见问题
-
-<details>
-<summary><code>import cv2</code> / <code>No module named 'shapely'</code> / <code>requires accelerate</code></summary>
-
-`bash tools/setup_env.sh` 会全部装好。手动安装请按 `requirements/inference.txt`;注意 `mmdet 2.25` 未声明 `shapely` 依赖,transformers 后端还需要 `accelerate`。
-</details>
-
-<details>
-<summary>mmcv-full 1.7.2 没有 torch 2.10 的轮子,setup 怎么处理?</summary>
-
-`tools/setup_env.sh` 先在 `wheels/` 里找匹配的轮子(`mmcv_full-1.7.2-cp310-*linux_x86_64.whl`,例如在别的 sm_86 机器上编好的),没有则用本地 CUDA 工具链源码编译(`CUDA_HOME`,5–60 分钟,结果缓存进 `wheels/`)。
-</details>
-
-<details>
-<summary>能否用 vLLM 0.18 / 把两个环境合并成一个?</summary>
-
-不能。vLLM 0.18 存在 GlmOcr 文本栈数值 bug(输出退化为复读循环);必须 0.32,而它需要 torch 2.13,与 mmcv 锁定的 torch 2.10 版面栈无法共存。详见 [docs/vllm.md](docs/vllm.md)。
-</details>
-
-<details>
-<summary>已有本地权重,放在哪里?</summary>
-
-`weights/ocr/` = 完整 HF 模型目录(model.safetensors + 配置 + tokenizer);`weights/layout/` = `finetune_infer.pth`。两个路径均相对仓库根目录,可通过 `--config` 覆盖(见 [tongguocr/config.py](tongguocr/config.py))。
-</details>
-
-## 📚 引用
+## 引用
 
 ```bibtex
 @article{zhou2026tongguocr,
@@ -175,7 +117,7 @@ python -m pip install -r evaluation/requirements_eval.txt
 }
 ```
 
-## 📄 许可
+## 许可
 
-代码以 [Apache License 2.0](LICENSE) 开源;第三方声明(OpenMMLab 系、独立 RO-ED 匹配代码)见
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。模型权重在 Hugging Face 单独发布,许可以其页面为准。M5HisDoc 与 MTHv2 数据集不随仓库分发。
+代码使用 [Apache-2.0](LICENSE)；来源说明见[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)。
+模型权重以其模型页面所列许可为准。

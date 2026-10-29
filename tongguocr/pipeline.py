@@ -12,7 +12,6 @@ in-process; there is no subprocess orchestration. Per page:
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
@@ -118,86 +117,6 @@ def _build_block_entries(
 def _compose_ocr_text(ocr_blocks: list[OcrBlockResult]) -> str:
     ordered_texts = [item.ocr_text.strip() for item in sorted(ocr_blocks, key=lambda item: item.block_id)]
     return "\n".join(text for text in ordered_texts if text)
-
-
-def _target_line_count(block: dict[str, Any]) -> int:
-    line_ids = block.get("line_ids") or []
-    if line_ids:
-        return max(1, len(line_ids))
-    line_range = block.get("line_range") or []
-    if len(line_range) == 2:
-        try:
-            return max(1, int(line_range[1]) - int(line_range[0]) + 1)
-        except (TypeError, ValueError):
-            return 1
-    return 1
-
-
-def _split_text_by_line_count(text: str, line_count: int) -> str:
-    text = text.replace("\r\n", "\n").replace("\r", "\n").strip()
-    if line_count <= 1 or not text:
-        return text
-    existing_lines = [line for line in text.split("\n") if line.strip()]
-    if len(existing_lines) >= max(2, line_count // 2):
-        return text
-
-    total = len(text)
-    if total <= line_count:
-        return "\n".join(text)
-
-    punctuation = set("。！？；;，,、：:")
-    boundaries: list[int] = []
-    previous = 0
-    for idx in range(1, line_count):
-        ideal = round(total * idx / line_count)
-        min_pos = max(previous + 1, ideal - max(3, total // line_count // 3))
-        max_pos = min(total - (line_count - idx), ideal + max(3, total // line_count // 3))
-        best = ideal
-        for pos in range(min_pos, max_pos + 1):
-            if 0 < pos < total and text[pos - 1] in punctuation:
-                best = pos
-                break
-        best = max(previous + 1, min(best, total - (line_count - idx)))
-        boundaries.append(best)
-        previous = best
-
-    parts: list[str] = []
-    start = 0
-    for end in boundaries + [total]:
-        part = text[start:end].strip()
-        if part:
-            parts.append(part)
-        start = end
-    return "\n".join(parts)
-
-
-def _restore_ocr_block_line_breaks(
-    ocr_blocks: list[OcrBlockResult],
-    block_entries: list[dict[str, Any]],
-) -> list[OcrBlockResult]:
-    """Best-effort: if a block decode carries fewer newlines than the layout
-    says it has lines, re-split it at punctuation so downstream consumers see
-    one line per output line. Only the plain form is re-split; the token form
-    keeps the model's own reading-order boundaries untouched."""
-    block_map = {int(item["block_id"]): item for item in block_entries}
-    restored: list[OcrBlockResult] = []
-    for item in ocr_blocks:
-        block = block_map.get(int(item.block_id), {})
-        token_text = item.ocr_text_tokens
-        if token_text is not None:
-            token_text = token_text.replace("\r\n", "\n").replace("\r", "\n").strip()
-        restored.append(
-            OcrBlockResult(
-                block_id=item.block_id,
-                crop_path=item.crop_path,
-                masked_crop_path=item.masked_crop_path,
-                ocr_text=_split_text_by_line_count(item.ocr_text, _target_line_count(block)),
-                backend=item.backend,
-                latency_ms=item.latency_ms,
-                ocr_text_tokens=token_text,
-            )
-        )
-    return restored
 
 
 def _build_page_preview(page_result: PipelinePageResult) -> dict[str, Any]:
@@ -360,18 +279,8 @@ def _finalize_prepared_page(
     page_id = prepared.page_id
     effective_crop_dir = Path(prepared.crop_dir) if prepared.crop_dir else output_dirs["block_crops"] / page_id
     block_entries = prepared.blocks
-    ocr_blocks = _restore_ocr_block_line_breaks(ocr_blocks, block_entries)
     ocr_text = _compose_ocr_text(ocr_blocks)
     text_path = write_text_result(output_dirs["texts"], page_id, ocr_text)
-    # Token form: blocks joined by newlines, relation tokens kept as-is.
-    token_texts = [
-        item.ocr_text_tokens.strip()
-        for item in sorted(ocr_blocks, key=lambda item: item.block_id)
-        if item.ocr_text_tokens is not None and item.ocr_text_tokens.strip()
-    ]
-    if token_texts:
-        write_text_result(output_dirs["texts_tokens"], page_id, "\n".join(token_texts))
-
     final_crop_dir = prepared.crop_dir
     if not crop_blocks:
         crop_paths = [item["crop_path"] for item in block_entries if item.get("crop_path")]
@@ -400,6 +309,7 @@ def _finalize_prepared_page(
                 ocr_text=item.ocr_text,
                 backend=item.backend,
                 latency_ms=item.latency_ms,
+                ocr_text_tokens=item.ocr_text_tokens,
             )
             for item in ocr_blocks
         ]

@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-"""TongGuOCR metrics: AR / CR / NED / F1 / BLEU and standalone RO-ED.
+"""Calculate AR, CR, NED, F1, BLEU and RO-ED from page predictions.
 
-Legacy metric.json inputs remain supported. Pass the token-form JSONL as
---ro-ed-input to calculate reading order in the same command, preserving
-line boundaries that the character-metric transform intentionally removes.
-No OmniDocBench checkout, torch, transformers, or separate environment is needed.
+Input: JSONL {page_id, predict, label} with recognition line boundaries.
+Output: one JSON file containing every metric. Legacy metric.json is accepted.
 """
 from __future__ import annotations
 import argparse
-import contextlib
 import json
 from pathlib import Path
 import re
@@ -155,19 +152,19 @@ def _character_records(rows):
     # Preserve the historical transform.py cleanup for raw JSONL inputs.
     def clean(text):
         text = re.sub(r"<(?:far_)?(?:left|right|up|down)(?:\|(?:far_)?(?:up|down))?>", "", text)
-        text = text.replace(' ', '').replace('\n', '').replace('\u3000', '')
+        text = text.replace(' ', '').replace('\n', '').replace('\r', '').replace('\u3000', '')
         return re.sub(r"<think>.*?</think>", '', text, flags=re.DOTALL)
     return [dict(Answer_Simplified=clean(r.get('label', r.get('Answer_Simplified', ''))),
                  Response=clean(r.get('predict', r.get('Response', '')))) for r in rows]
 
 
 def main(input_path=None, *, ro_ed_input=None, workers=12, ro_ed_output=None,
-         summary_json=None, ro_ed_only=False):
+         summary_json=None, ro_ed_only=False, skip_ro_ed=False):
     metrics = {}
+    raw = read_records(input_path) if input_path is not None else None
     if not ro_ed_only:
         if input_path is None:
             raise ValueError('--input_path is required for character metrics')
-        raw = read_records(input_path)
         rows = _character_records(raw)
         ar, cr = cal_ar_cr(1, rows)
         ned = cal_edit_distance(1, rows)
@@ -175,12 +172,13 @@ def main(input_path=None, *, ro_ed_input=None, workers=12, ro_ed_output=None,
         bleu = cal_ocr_bleu(1, rows)
         metrics.update({k: round(v * 100, 2) for k, v in
                         dict(AR=ar, CR=cr, NED=ned, F1=f1, Precision=p, Recall=r, BLEU=bleu).items()})
-    if ro_ed_input is not None:
-        ro = cal_ro_ed(1, read_records(ro_ed_input), workers=workers,
-                       output_dir=ro_ed_output, source_path=ro_ed_input)
+    if not skip_ro_ed:
+        ro_rows = read_records(ro_ed_input) if ro_ed_input is not None else raw
+        if ro_rows is None:
+            raise ValueError('prediction input is required for RO-ED')
+        ro = cal_ro_ed(1, ro_rows, workers=workers, output_dir=ro_ed_output,
+                       source_path=ro_ed_input or input_path)
         metrics['RO-ED'] = ro['ALL_page_avg']
-    elif ro_ed_only:
-        raise ValueError('--ro-ed-only requires --ro-ed-input')
     if summary_json:
         path = Path(summary_json)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -190,23 +188,18 @@ def main(input_path=None, *, ro_ed_input=None, workers=12, ro_ed_output=None,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--input_path', help='legacy metric.json or {page_id,predict,label} JSONL')
-    parser.add_argument('--output_path', help='text report, including RO-ED when requested')
-    parser.add_argument('--ro-ed-input', help='raw token-form predictions JSONL (line boundaries retained)')
-    parser.add_argument('--ro-ed-output', help='directory for RO-ED summary and per-page diagnostics')
-    parser.add_argument('--ro-ed-only', action='store_true', help='skip character metrics')
+    parser.add_argument('--input_path', required=True, help='page-prediction JSONL or legacy metric.json')
+    parser.add_argument('--output_path', '--summary-json', dest='output_path', default='metrics.json',
+                        help='combined JSON result (default: metrics.json)')
     parser.add_argument('--match-workers', type=int, default=12)
-    parser.add_argument('--summary-json', help='combined metric summary')
+    parser.add_argument('--skip-ro-ed', action='store_true', help='calculate character metrics only')
+    # Compatibility with existing local evaluation commands; unnecessary for new runs.
+    parser.add_argument('--ro-ed-input', help=argparse.SUPPRESS)
+    parser.add_argument('--ro-ed-output', help=argparse.SUPPRESS)
+    parser.add_argument('--ro-ed-only', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
-    if not args.input_path and not args.ro_ed_only:
-        parser.error('--input_path is required unless --ro-ed-only is set')
     if args.match_workers < 1:
         parser.error('--match-workers must be positive')
-    with contextlib.ExitStack() as stack:
-        if args.output_path:
-            path = Path(args.output_path)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            stream = stack.enter_context(path.open('w', encoding='utf-8'))
-            stack.enter_context(contextlib.redirect_stdout(stream))
-        main(args.input_path, ro_ed_input=args.ro_ed_input, workers=args.match_workers,
-             ro_ed_output=args.ro_ed_output, summary_json=args.summary_json, ro_ed_only=args.ro_ed_only)
+    main(args.input_path, ro_ed_input=args.ro_ed_input, workers=args.match_workers,
+         ro_ed_output=args.ro_ed_output, summary_json=args.output_path,
+         ro_ed_only=args.ro_ed_only, skip_ro_ed=args.skip_ro_ed)

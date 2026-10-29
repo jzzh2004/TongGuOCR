@@ -16,7 +16,7 @@ import torch
 
 from ..models import OcrBlockResult
 from .preprocess import prepare_pil_image
-from .relation_tokens import remove_relation_tokens, strip_control_tokens
+from .relation_tokens import relation_tokens_to_newlines, strip_control_tokens
 
 
 _TRANSFORMERS_CACHE: dict[tuple[str, str], tuple[object, object]] = {}
@@ -87,16 +87,11 @@ def recognize_block_image_transformers(
             do_sample=False,
         )
     generated_ids = outputs[0][inputs["input_ids"].shape[1] :]
-    # Decode once with special tokens kept, then derive both output forms:
-    #   token form: control specials removed, relation tokens kept
-    #              (RO-ED protocol input, texts_tokens/)
-    #   plain form: relation tokens removed as well — byte-equal to a
-    #              skip_special_tokens=True decode (texts/, AR/CR/NED chain;
-    #              line structure recovered by the pipeline's re-split)
+    # Keep relation tokens during decoding, then turn them into newlines.
     raw = processor.decode(generated_ids, skip_special_tokens=False)
     extra_specials = getattr(processor, "tokenizer", processor).all_special_tokens
     token_text = strip_control_tokens(raw, extra_specials)
-    plain_text = remove_relation_tokens(token_text)
+    plain_text = relation_tokens_to_newlines(token_text)
     latency_ms = (time.perf_counter() - started) * 1000.0
     return OcrBlockResult(
         block_id=block_id,

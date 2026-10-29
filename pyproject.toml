@@ -9,11 +9,8 @@ description = "TongGuOCR: OCR for classical Chinese documents (layout + block + 
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
-# Dependencies are deliberately NOT declared here: TongGuOCR needs two
-# separate environments (mmcv-full 1.7.2 pins torch 2.10 + py3.10, while
-# vLLM 0.32 needs torch 2.13 + py3.12). Install the right one per backend
-# with tools/setup_env.sh / tools/setup_vllm_env.sh, which use
-# requirements/inference.txt — see README.md "Environment".
+# Install the tested runtime with tools/setup_env.sh. The optional vLLM
+# server uses a separate environment; see tools/setup_vllm_env.sh.
 dependencies = []
 
 [project.scripts]

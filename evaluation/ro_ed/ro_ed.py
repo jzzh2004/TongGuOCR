@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Compatibility entry point for standalone RO-ED; prefer calculate_metrics.py.
 
-No OmniDocBench modules are imported. The legacy --omnidocbench-root flag
-is accepted and ignored to keep old local evaluation commands usable.
+Use evaluation/calculate_metrics.py to write every metric to one JSON file.
 """
 from __future__ import annotations
 import argparse

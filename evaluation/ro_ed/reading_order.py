@@ -51,7 +51,7 @@ def score_page(record):
 
 
 def calculate_reading_order(records, workers=12, *, source_path=None, output_dir=None):
-    """Evaluate token-form {page_id,predict,label} rows without OmniDocBench.
+    """Evaluate line-preserving {page_id,predict,label} records.
 
     Empty GT/prediction pairs have no order sequence and are excluded from
     the mean, matching the archived scorer. A missing prediction with GT

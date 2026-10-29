@@ -5,17 +5,9 @@ eight single-axis tokens plus sixteen ``<horizontal|vertical>`` combinations.
 During decoding the model emits them between text lines to steer generation
 along its predicted reading path.
 
-The pipeline writes TWO output forms per page:
-
-- ``texts_tokens/<page>.txt`` — the token form: raw decode with control
-  special tokens removed but the relation tokens kept. Its line boundaries
-  are the model's own reading-order predictions; this is the input form the
-  paper's RO-ED protocol was defined on (evaluation consumes this one).
-- ``texts/<page>.txt`` — the plain form: relation tokens removed (byte-equal
-  to a skip_special_tokens=True decode), then deterministically re-split to
-  one output line per detected layout text line. AR/CR/NED/F1/BLEU are
-  insensitive to this distinction (newlines are stripped by the metric
-  chain); the archived benchmark texts/ files use this form.
+The pipeline replaces each relation token with a newline in ``texts/``.
+Line boundaries come from the recognition model. Raw relation tokens are
+retained in the per-block JSON record for inspection.
 """
 from __future__ import annotations
 
@@ -66,12 +58,7 @@ _CONTROL_TOKEN_RE: Final = re.compile(
 
 
 def strip_control_tokens(text: str, extra_special_tokens: Iterable[str] = ()) -> str:
-    """Remove control/chat special tokens, KEEPING the relation tokens.
-
-    This yields the token-form output (`texts_tokens/`) whose line boundaries
-    are the model's own reading-order predictions — the input form the paper's
-    RO-ED protocol was defined on.
-    """
+    """Remove control/chat special tokens, keeping relation tokens."""
     text = _CONTROL_TOKEN_RE.sub("", text)
     for token in extra_special_tokens:
         if token and token not in RELATION_TOKENS:
@@ -80,10 +67,10 @@ def strip_control_tokens(text: str, extra_special_tokens: Iterable[str] = ()) ->
 
 
 def remove_relation_tokens(text: str) -> str:
-    """Delete every relation token (no separator inserted).
-
-    Applied to the token-form text this reproduces, byte for byte, what a
-    skip_special_tokens=True decode yields — the plain form (`texts/`) the
-    released benchmark AR/CR/NED numbers were computed on.
-    """
+    """Remove relation tokens for whitespace-insensitive character scoring."""
     return RELATION_TOKEN_RE.sub("", text)
+
+
+def relation_tokens_to_newlines(text: str) -> str:
+    """Replace exactly the model's 24 relation tokens with line boundaries."""
+    return RELATION_TOKEN_RE.sub("\n", text.replace("\r\n", "\n").replace("\r", "\n"))

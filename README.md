@@ -15,7 +15,7 @@
 
 ## 📰 News
 
-- **[2026-10]** Inference code, evaluation suite, and model weights released.
+- **[2026-10]** Inference code and evaluation tools.
 - **[2026-08]** Paper released on arXiv.
 
 ## 📖 Introduction
@@ -42,161 +42,84 @@ reading orders. It combines two components:
 | MTHv2 | **97.93** | **98.33** | **2.05** | **1.51** |
 | M5HisDoc | **93.76** | **94.46** | **6.15** | **3.49** |
 
-Full comparisons with competing methods are in the [paper](https://arxiv.org/abs/2608.07917).
-Per-backend archived runs of this repository (the archived serial transformers and vLLM
-runs agree within 0.06 pts on the text-recognition metrics) are listed in
-[evaluation/README.md](evaluation/README.md).
+See the [paper](https://arxiv.org/abs/2608.07917) for full comparisons.
 
-## 🛠️ Requirements
+## Installation
 
-| | |
-|---|---|
-| OS | Linux |
-| GPU | NVIDIA, ≥ 16 GB VRAM (24 GB tested), CUDA driver ≥ 12.8 runtime support |
-| Python | 3.10 (the setup script creates the conda env) |
-| PyTorch | 2.10.0 (cu128 wheel, installed automatically) |
-| transformers | ≥ 5.3.0 (native `glm_ocr` support — required) |
-| Disk | ~10 GB (weights ≈ 5 GB + environment) |
-
-## 🚀 Installation
+Tested stack: Linux, Python 3.10, PyTorch 2.10.0 (CUDA 12.8),
+Transformers 5.3.0, and an NVIDIA GPU with bf16 support. The setup script
+installs these dependencies. The NVIDIA driver must support the selected
+CUDA runtime; the current test machine uses driver 575.64 and an RTX A6000.
+VRAM usage depends on image size and backend; a minimum GPU size has not
+been established. Reserve about 20 GB of disk space for weights, the main
+environment, and installation files; the optional vLLM environment needs more.
 
 ```bash
 git clone https://github.com/jzzh2004/TongGuOCR.git
 cd TongGuOCR
-
-# 1) weights  (or place your local copy under weights/ocr and weights/layout)
-bash tools/download_weights.sh
-
-# 2) environment  (~10 min; builds mmcv-full 1.7.2 once, see FAQ)
 bash tools/setup_env.sh
 conda activate tongguocr
 ```
 
-If pypi.org is unreachable, prepend a mirror:
-`PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple bash tools/setup_env.sh`.
-`HF_ENDPOINT=https://hf-mirror.com` does the same for weight downloads.
+Place the OCR model in `weights/ocr/` and the detector checkpoint at
+`weights/layout/finetune_infer.pth`. The Hugging Face weight URL is a
+placeholder until publication; `tools/download_weights.sh` will download
+from that repository once the weights are available.
 
-## 🖼️ Quickstart
+The detector uses a compiled `mmcv-full` extension. Setup uses a compatible
+wheel from `wheels/`, or builds it with the local CUDA toolkit. A source
+build can take several minutes. For a package mirror, set `PIP_INDEX`;
+for a weight mirror, set `HF_ENDPOINT`.
+
+## Recognition
 
 ```bash
-conda activate tongguocr
-
-# a directory of page images → one recognized text file per page
 python -m tongguocr -i <images_dir> -o output/
-
-# a single page (prints the recognized text)
 python -m tongguocr -i <page.jpg> -o output/ --print-result
-
-# recognize only the first 10 images of a directory
-python -m tongguocr -i <images_dir> -o output/ --limit 10
+# Optional: --limit 10, --no-visualize, --config config.yaml
 ```
 
-Outputs under `output/`:
+| Output | Content |
+| --- | --- |
+| `texts/<page>.txt` | Recognized text; each of the 24 relation tokens becomes a newline |
+| `pages/<page>.json` | Layout, blocks, recognized text, and raw block decodes |
+| `visuals/<page>.jpg` | Layout and block visualization |
+| `block_crops/<page>/` | Recognition crops |
 
-| Path | Content |
-|---|---|
-| `texts/<page>.txt` | plain-form text, one output line per detected layout text line |
-| `texts_tokens/<page>.txt` | token form (relation tokens kept; RO-ED input) |
-| `pages/<page>.json` | full page record: lines, blocks, per-block OCR text |
-| `visuals/<page>.jpg` | layout / block visualization |
-| `block_crops/<page>/` | the block crops fed to the recognizer |
+For example, `甲乙<left|up>丙丁` becomes `甲乙\n丙丁`.
+Line breaks follow the model's output. Text is not re-split using detection
+counts or punctuation.
 
-**Reading-order tokens.** While decoding, the model emits transition tokens
-between text lines (`<down>`, `<left|up>`, …; 24 in total — see
-[tongguocr/ocr/relation_tokens.py](tongguocr/ocr/relation_tokens.py)) to
-steer generation along the predicted reading path. Each page is written in
-two equivalent forms:
-
-- `texts_tokens/<page>.txt` — **token form**: the raw decode with the
-  relation tokens kept. Line boundaries here are the model's own
-  reading-order predictions; this is the form the paper's RO-ED metric is
-  computed on.
-- `texts/<page>.txt` — **plain form**: relation tokens removed and the text
-  deterministically re-split to one output line per detected layout text
-  line. This is the form of the archived AR/CR/NED/F1/BLEU benchmark texts.
-
-```
-token form:  太眞家眞人無那隱又以滅百魔<left|far_up>宣王時童謡
-plain form:  太眞家眞人無⏎那隱又以滅百⏎魔宣王時童謡   (3 layout lines)
-```
-
-### Optional: vLLM backend
-
-An OpenAI-compatible vLLM server processes same-page block crops concurrently.
-Concurrency 4 measured about 1.9× faster crop recognition than serial
-requests on a 40-page sample, with small text-metric changes (at most
-0.06 pt) and no reading-order regression. See the measured results in
-[docs/vllm.md](docs/vllm.md). It needs a second conda env
-because vLLM 0.32 requires torch 2.13 while the layout stack pins torch 2.10:
+### Optional vLLM backend
 
 ```bash
-bash tools/setup_vllm_env.sh      # creates `tongguocr-vllm2`
-GPU_IDS=0 bash tools/serve_vllm.sh        # terminal 1: start the server
-python -m tongguocr -i <images_dir> -o output/ --backend vllm   # terminal 2
+bash tools/setup_vllm_env.sh
+GPU_IDS=0 bash tools/serve_vllm.sh  # terminal 1
+python -m tongguocr -i <images_dir> -o output/ --backend vllm  # terminal 2
 ```
 
-Details, driver-specific install routes, and troubleshooting:
-[docs/vllm.md](docs/vllm.md).
+All crops from one page are sent in one batch request, with one independent
+conversation per crop. vLLM schedules them on the server. See
+[the vLLM guide](docs/vllm.md) for configuration and memory settings.
 
-## 📏 Evaluation
-
-The evaluation suite computes the paper's four metrics (AR / CR / NED /
-RO-ED) through `evaluation/calculate_metrics.py`, using local standalone
-RO-ED helpers. Install `evaluation/requirements_eval.txt` in the inference
-environment; the OmniDocBench framework and a second evaluation env are
-unnecessary. Metrics are computed from a pipeline output directory. The M5HisDoc and MTHv2 test sets are
-**not** redistributed; point the script at your local copy:
+## Evaluation
 
 ```bash
-# --dataset m5 | mthv2; --run-dir = pipeline output containing texts/;
-# --dataset-root = your local M5 or MTHv2 copy
-./evaluation/run_eval.sh \
+python -m pip install -r evaluation/requirements_eval.txt
+bash evaluation/run_eval.sh \
   --dataset m5 \
   --run-dir output/ \
   --dataset-root /path/to/M5 \
   --output-dir eval_out/m5
 ```
 
-Dataset formats, metric definitions, options, and the expected values of the
-archived runs: [evaluation/README.md](evaluation/README.md).
+AR, CR, NED, F1, Precision, Recall, BLEU, and RO-ED are written together to
+**`eval_out/m5/metrics.json`**, using the same recognized text. Select
+`--dataset mthv2` for MTHv2. Evaluation runs in the inference environment
+or a CPU environment. Dataset formats and metric definitions are in
+[the evaluation guide](evaluation/README.md). The datasets are not included.
 
-## ❓ FAQ
-
-<details>
-<summary><code>import cv2</code> / <code>No module named 'shapely'</code> / <code>requires accelerate</code></summary>
-
-`bash tools/setup_env.sh` installs all of these. If you install manually,
-follow `requirements/inference.txt` and note that `mmdet 2.25` does not
-declare `shapely`, and the transformers backend needs `accelerate`.
-</details>
-
-<details>
-<summary>mmcv-full 1.7.2 has no wheel for torch 2.10 — what does setup do?</summary>
-
-`tools/setup_env.sh` first looks for a matching wheel in `wheels/`
-(`mmcv_full-1.7.2-cp310-*linux_x86_64.whl`, e.g. one built on another
-sm_86 machine), then falls back to a source build against your local CUDA
-toolkit (`CUDA_HOME`, 5–60 min, cached into `wheels/`).
-</details>
-
-<details>
-<summary>Can I use vLLM 0.18 / a single merged environment?</summary>
-
-No. vLLM 0.18 has a GlmOcr text-stack numeric bug (degenerate repetition
-loops); 0.32 is required and needs torch 2.13, which cannot coexist with the
-mmcv-locked torch 2.10 layout stack. See [docs/vllm.md](docs/vllm.md).
-</details>
-
-<details>
-<summary>Where do the weights go if I have them locally?</summary>
-
-`weights/ocr/` = the full HF model directory (model.safetensors + configs +
-tokenizer), `weights/layout/` = `finetune_infer.pth`. Both paths are relative
-to the repository root and can be overridden via `--config` (see
-[tongguocr/config.py](tongguocr/config.py)).
-</details>
-
-## 📚 Citation
+## Citation
 
 ```bibtex
 @article{zhou2026tongguocr,
@@ -207,10 +130,7 @@ to the repository root and can be overridden via `--config` (see
 }
 ```
 
-## 📄 License
+## License
 
-Code is released under the [Apache License 2.0](LICENSE); third-party
-attributions (OpenMMLab stack, adapted RO-ED text matcher) are listed in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Model weights are
-distributed separately on Hugging Face under the license stated there. The
-M5HisDoc and MTHv2 datasets are not redistributed.
+Code: [Apache-2.0](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md)
+for attribution. Model weights have the license stated on their model page.

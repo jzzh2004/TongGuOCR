@@ -12,8 +12,7 @@ class OcrBlockResult:
     ocr_text: str
     backend: str
     latency_ms: float | None = None
-    # Token-form text (relation tokens kept) for the RO-ED protocol; None for
-    # backends/paths that do not produce it.
+    # Raw recognition text with relation tokens retained for inspection.
     ocr_text_tokens: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
