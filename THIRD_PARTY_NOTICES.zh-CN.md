@@ -29,7 +29,7 @@
 
 ## 其他评测脚本
 
-`evaluation/transform.py` 和 `evaluation/calculate_metrics.py` 是本项目实现的脚本，
+`evaluation/calculate_metrics.py` 是本项目实现的脚本，
 遵循 OCR 中通用的字符编辑距离评测约定。
 
 ## 权重与数据集

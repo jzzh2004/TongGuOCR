@@ -41,8 +41,8 @@ at installation or runtime.
 
 ## Evaluation metric scripts
 
-`evaluation/transform.py` and `evaluation/calculate_metrics.py` are in-house
-scripts that follow the AR/CR edit-distance evaluation convention widely used
+`evaluation/calculate_metrics.py` is an in-house script that follows the
+AR/CR edit-distance evaluation convention widely used
 in MLLM-OCR repositories (e.g. GOT-OCR, DeepSeek-OCR). No third-party source
 code is copied verbatim.
 

@@ -9,27 +9,31 @@
 # Override the repository id with HF_REPO_ID if you use a mirror/another
 # account. If huggingface.co is unreachable, set HF_ENDPOINT (e.g.
 # https://hf-mirror.com). Alternatively, place a local copy of the weights
-# at the same paths and skip this script (see README FAQ).
+# at the same paths and skip this script (see README.md).
 set -euo pipefail
 
 HF_REPO_ID="${HF_REPO_ID:-jzzh2004/TongGuOCR}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PYTHON="${PYTHON:-python3}"
 
-command -v huggingface-cli >/dev/null 2>&1 || {
-  echo "!! huggingface-cli not found. Install it first:  pip install 'huggingface_hub[cli]'"
-  exit 1
-}
+exec "$PYTHON" - "$ROOT" "$HF_REPO_ID" <<'PY'
+import sys
+from pathlib import Path
 
+try:
+    from huggingface_hub import hf_hub_download, snapshot_download
+except ImportError:
+    raise SystemExit("huggingface_hub is required; activate the environment created by tools/setup_env.sh.")
 
-echo "==> downloading OCR model (full snapshot) from $HF_REPO_ID -> $ROOT/weights/ocr"
-huggingface-cli download "$HF_REPO_ID" \
-  --local-dir "$ROOT/weights/ocr" --local-dir-use-symlinks False
+root = Path(sys.argv[1])
+repo_id = sys.argv[2]
+print(f"Downloading OCR model from {repo_id} -> {root / 'weights/ocr'}", flush=True)
+snapshot_download(repo_id, local_dir=root / "weights/ocr", ignore_patterns=["layout/*"])
 
 # The checkpoint lives at layout/finetune_infer.pth inside the repo; download
 # into weights/ (not weights/layout/) so it lands at weights/layout/finetune_infer.pth.
-echo "==> downloading layout checkpoint from ${HF_REPO_ID}/layout -> $ROOT/weights/layout"
-huggingface-cli download "$HF_REPO_ID" \
-  layout/finetune_infer.pth \
-  --local-dir "$ROOT/weights" --local-dir-use-symlinks False
+print(f"Downloading layout checkpoint -> {root / 'weights/layout'}", flush=True)
+hf_hub_download(repo_id, filename="layout/finetune_infer.pth", local_dir=root / "weights")
 
-echo "Done. Weights ready under $ROOT/weights/{ocr,layout}."
+print(f"Done. Weights ready under {root / 'weights'}/{{ocr,layout}}.")
+PY

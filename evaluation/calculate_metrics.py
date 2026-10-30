@@ -131,7 +131,7 @@ def read_records(path):
 
 
 def cal_ro_ed(task_id, data_list, *, workers=12, output_dir=None, source_path=None):
-    """Compute reading-order edit distance from raw token-form page records."""
+    """Compute reading-order edit distance from records that preserve line boundaries."""
     if __package__:
         from .ro_ed.reading_order import calculate_reading_order
     else:
@@ -149,7 +149,7 @@ def cal_ro_ed(task_id, data_list, *, workers=12, output_dir=None, source_path=No
 
 
 def _character_records(rows):
-    # Preserve the historical transform.py cleanup for raw JSONL inputs.
+    # Character metrics ignore line boundaries; RO-ED receives the original rows.
     def clean(text):
         text = re.sub(r"<(?:far_)?(?:left|right|up|down)(?:\|(?:far_)?(?:up|down))?>", "", text)
         text = text.replace(' ', '').replace('\n', '').replace('\r', '').replace('\u3000', '')

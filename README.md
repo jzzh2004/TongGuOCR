@@ -44,6 +44,18 @@ reading orders. It combines two components:
 
 See the [paper](https://arxiv.org/abs/2608.07917) for full comparisons.
 
+## Repository structure
+
+| Directory | Contents |
+| --- | --- |
+| `tongguocr/` | Inference pipeline: layout detection, blocking, crops, and OCR backends |
+| [evaluation/](evaluation/README.md) | Dataset adapters, combined metrics, and the local RO-ED implementation |
+| `tools/` | Setup, weight download, and serving scripts; development checks in `tools/dev/` |
+| `requirements/` | Main inference environment dependencies |
+| `weights/` | Local weights; Git tracks only directory placeholders |
+| `tests/`, `evaluation/tests/` | Inference protocol and evaluation regression tests |
+| [website/](website/README.md) | Independent project page built with Node.js |
+
 ## Installation
 
 Tested stack: Linux, Python 3.10, PyTorch 2.10.0 (CUDA 12.8),

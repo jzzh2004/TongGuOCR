@@ -38,6 +38,18 @@ TongGuOCR 是面向中文历史文献 OCR 的多模态大模型,针对复杂版�
 
 完整比较见[论文](https://arxiv.org/abs/2608.07917)。
 
+## 仓库结构
+
+| 目录 | 内容 |
+| --- | --- |
+| `tongguocr/` | 推理管线：版面检测、分块、裁剪和 OCR 后端 |
+| [evaluation/](evaluation/README.zh-CN.md) | 数据集适配、统一指标入口及 RO-ED 本地实现 |
+| `tools/` | 安装、权重下载、服务启动；开发检查放在 `tools/dev/` |
+| `requirements/` | 主推理环境依赖 |
+| `weights/` | 本地权重位置，Git 仅跟踪目录占位文件 |
+| `tests/`、`evaluation/tests/` | 推理协议与评测回归测试 |
+| [website/](website/README.zh-CN.md) | 独立项目主页，使用 Node.js 构建 |
+
 ## 安装
 
 已验证的软件组合：Linux、Python 3.10、PyTorch 2.10.0（CUDA 12.8）、

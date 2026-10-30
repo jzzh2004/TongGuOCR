@@ -7,6 +7,8 @@ __pycache__/
 .ruff_cache/
 .venv/
 venv/
+/build/
+/dist/
 
 # ---- model weights: never commit; fetch via tools/download_weights.sh ----
 weights/ocr/*
@@ -24,6 +26,7 @@ weights/layout/*
 wheels/
 
 # ---- run outputs ----
+output/
 outputs/
 tmp/
 work/
@@ -33,6 +36,7 @@ work/
 eval_out/
 staging/
 metric.json
+metrics.json
 predict.jsonl
 predict_raw.jsonl
 res.txt

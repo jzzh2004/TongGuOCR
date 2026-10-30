@@ -51,8 +51,9 @@ check recognition and reading-order metrics when changing settings.
 | `MAX_MODEL_LEN` | `16384` | Context limit, including image, prompt and output |
 
 The fixed KV budget replaces proportional cache reservation. GPU memory
-includes weights, KV cache, activations and the layout process. A server
-reserving tens of GiB does not establish a minimum hardware requirement.
+includes weights, KV cache, activations and the layout process. The cache
+budget differs from peak usage; see the measurements below. A minimum GPU
+size has not been established.
 For a remote server, set `ocr.vllm.api_base` to its `/v1` URL in a config.
 Check readiness with `wget -qO- http://127.0.0.1:8090/v1/models`.
 
