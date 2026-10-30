@@ -63,3 +63,21 @@ python evaluation/calculate_metrics.py \
 The same command accepts legacy `metric.json` records with
 `Answer_Simplified` and `Response`. RO-ED needs the original line boundaries;
 line breaks already removed from an older input cannot be recovered.
+
+## Fresh full-set verification
+
+2026-10-30: the pipeline with relation-token newlines and whole-page vLLM
+batches completed both datasets with both backends: 3600 successful page
+runs. Every page/block backend, newline conversion and combined metric file
+passed validation.
+
+| Dataset | Backend | Pages | AR | CR | NED | F1 | BLEU | RO-ED ×100 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| M5 | transformers | 1000 | 93.74 | 94.44 | 6.17 | 94.44 | 88.90 | 3.4730 |
+| M5 | vllm | 1000 | 93.81 | 94.48 | 6.11 | 94.43 | 88.93 | 3.4813 |
+| MTHv2 | transformers | 800 | 97.93 | 98.32 | 2.05 | 98.03 | 96.23 | 1.5114 |
+| MTHv2 | vllm | 800 | 97.93 | 98.32 | 2.05 | 98.03 | 96.22 | 1.5051 |
+
+AR/CR/NED/F1/BLEU differ from each backend’s archived reference by at most
+0.01 percentage point. RO-ED remains a fraction in the result JSON; this
+table multiplies it by 100 for comparison with the paper.
