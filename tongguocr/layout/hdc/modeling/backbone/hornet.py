@@ -1,3 +1,5 @@
+# Copyright (c) 2021 Yongming Rao. MIT; see THIRD_PARTY_LICENSES/HorNet-MIT.md.
+# Adapted for TongGuOCR's detection backbone.
 from functools import partial
 from mmdet.utils import get_root_logger
 from mmcv.runner import _load_checkpoint

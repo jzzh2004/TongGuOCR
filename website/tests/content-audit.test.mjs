@@ -25,7 +25,8 @@ test("keeps project links centrally configurable", () => {
   assert.match(content, /label: "Paper", url: "https:\/\/arxiv\.org\/abs\/2608\.07917"/);
   assert.match(content, /label: "Demo", url: "https:\/\/guji-ocr\.com"/);
   assert.match(content, /label: "GitHub", url: "https:\/\/github\.com\/jzzh2004\/TongGuOCR"/);
-  assert.match(content, /label: "Hugging Face", url: null/);
+  assert.match(content, /label: "Hugging Face", url: "https:\/\/huggingface\.co\/jzzh2004\/TongGuOCR"/);
+  assert.match(content, /label: "ModelScope", url: "https:\/\/modelscope\.ai\/models\/jzzh2004\/TongGuOCR"/);
   assert.doesNotMatch(app, /disabled title=/);
   assert.match(app, /className="resource-link is-unavailable"/);
   assert.match(app, /target="_blank" rel="noreferrer noopener"/);

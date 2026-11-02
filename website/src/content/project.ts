@@ -35,7 +35,8 @@ export const project = {
     { label: "Paper", url: "https://arxiv.org/abs/2608.07917", meta: "arXiv" },
     { label: "Demo", url: "https://guji-ocr.com", meta: "Open demo" },
     { label: "GitHub", url: "https://github.com/jzzh2004/TongGuOCR", meta: "Source code" },
-    { label: "Hugging Face", url: null, meta: "Coming soon" },
+    { label: "Hugging Face", url: "https://huggingface.co/jzzh2004/TongGuOCR", meta: "Model weights" },
+    { label: "ModelScope", url: "https://modelscope.ai/models/jzzh2004/TongGuOCR", meta: "International" },
   ] satisfies ProjectLink[],
   abstract:
     "Chinese historical documents preserve valuable cultural heritage, but many collections remain accessible only as scanned page images. This format limits full-text retrieval, collation, and computational analysis. Optical character recognition (OCR) can convert these images into machine-readable text, but accurate transcription remains challenging because historical documents often contain complex layouts, rare characters, and nontrivial reading orders. We propose TongGuOCR, a layout-aware and token-augmented OCR framework for Chinese historical documents. Its Layout-Aware Preprocessing module constructs and refines locally coherent recognition blocks to preserve local context while reducing interference across regions. Its Token-Augmented Recognition module uses character-level vocabulary expansion to represent rare characters and line-to-line transition modeling to provide spatial guidance during decoding. Experiments on two Chinese historical document OCR benchmarks show that TongGuOCR outperforms representative traditional OCR models, multimodal large language models (MLLMs), and OCR-oriented systems. Ablation studies confirm the contribution of each design.",

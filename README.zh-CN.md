@@ -8,7 +8,8 @@
   [论文](https://arxiv.org/abs/2608.07917) ·
   [项目主页](https://jzzh2004.github.io/TongGuOCR) ·
   [在线演示](https://guji-ocr.com) ·
-  [模型权重](https://huggingface.co/jzzh2004/TongGuOCR)
+  [Hugging Face](https://huggingface.co/jzzh2004/TongGuOCR) ·
+  [ModelScope 国际站](https://modelscope.ai/models/jzzh2004/TongGuOCR)
 
   [English](README.md) · 简体中文
 </div>
@@ -65,13 +66,29 @@ bash tools/setup_env.sh
 conda activate tongguocr
 ```
 
-将 OCR 模型放在 `weights/ocr/`，检测权重放在
-`weights/layout/finetune_infer.pth`。Hugging Face 权重地址暂为发布占位；
-权重上线后可使用 `tools/download_weights.sh` 下载。
+从 [Hugging Face](https://huggingface.co/jzzh2004/TongGuOCR) 下载最终 Stage 3 权重：
+
+```bash
+bash tools/download_weights.sh huggingface
+```
+
+如果无法访问 Hugging Face，可使用
+[ModelScope 国际站](https://modelscope.ai/models/jzzh2004/TongGuOCR)：
+
+```bash
+python -m pip install modelscope
+bash tools/download_weights.sh modelscope
+```
+
+ModelScope 权重托管在 `modelscope.ai`，不是 `modelscope.cn`。
+仓库处于私有状态时，需使用有访问权限的账号：Hugging Face 设置 `HF_TOKEN`，
+ModelScope 国际站设置 `MODELSCOPE_API_TOKEN`。
+脚本将七个 OCR 文件放入 `weights/ocr/`，检测权重放入
+`weights/layout/finetune_infer.pth`；也可将本地副本放到这些路径。
 
 检测器使用编译后的 `mmcv-full` 扩展。安装脚本优先使用 `wheels/` 中的兼容轮子，
 否则通过本地 CUDA 工具链编译，源码编译可能需要数分钟。
-包下载镜像可通过 `PIP_INDEX` 设置，权重镜像可通过 `HF_ENDPOINT` 设置。
+Python 包下载镜像可通过 `PIP_INDEX` 设置。
 
 ## 识别
 
@@ -131,5 +148,6 @@ AR、CR、NED、F1、Precision、Recall、BLEU 和 RO-ED 使用同一份识别�
 
 ## 许可
 
-代码使用 [Apache-2.0](LICENSE)；来源说明见[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)。
-模型权重以其模型页面所列许可为准。
+代码、TongGuOCR 自有 OCR 改动及检测权重使用 [Apache-2.0](LICENSE)；
+GLM-OCR 基座模型保留 MIT 条款。许可范围与来源说明见
+[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)。

@@ -22,11 +22,9 @@ CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"
 # GPU arch for the mmcv source build. Empty = auto-detect from the installed
 # torch + local GPU at build time. Only used when no prebuilt wheel matches.
 TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-}"
-# Official indexes by default; set PIP_INDEX to a mirror (e.g.
-# https://pypi.tuna.tsinghua.edu.cn/simple) and HF_ENDPOINT to a mirror (e.g.
-# https://hf-mirror.com) if direct access is unavailable on your network.
+# Official package index by default; PIP_INDEX may select a Python package mirror.
+# If Hugging Face is unreachable, use tools/download_weights.sh modelscope.
 PIP_INDEX="${PIP_INDEX:-https://pypi.org/simple}"
-export HF_ENDPOINT="${HF_ENDPOINT:-https://huggingface.co}"
 # mmcv-full 1.7.2 has no PyPI wheel for torch 2.10: it is built from source
 # here (5-60 min) and cached under wheels/. Drop a matching prebuilt wheel
 # (linux x86_64, CPython 3.10, sm_86) into $WHEELS_DIR to skip the build.

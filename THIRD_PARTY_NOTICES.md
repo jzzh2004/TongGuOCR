@@ -20,6 +20,30 @@ downloads or builds `mmcv-full` from source as appropriate for your platform.
 `tools/patch_openmmlab.py` applies small compatibility patches for newer
 PyTorch versions.
 
+## Detection code adaptations
+
+- `tongguocr/layout/hdc/modeling/backbone/hornet.py` adapts HorNet's backbone
+  code, including its recursive gated convolution and global/local filter.
+  Upstream: https://github.com/raoyongming/HorNet. The original code retains
+  MIT terms and Copyright (c) 2021 Yongming Rao. See
+  [the retained HorNet license](THIRD_PARTY_LICENSES/HorNet-MIT.md).
+- `tongguocr/layout/hdc/utils/comm.py` retains communication utilities from
+  Facebook's maskrcnn-benchmark initial release, with an added `get_rank`
+  helper and formatting changes. Its original Facebook copyright notice
+  remains in the file. See
+  [the retained MIT license](THIRD_PARTY_LICENSES/maskrcnn-benchmark-MIT.md).
+- The local mask-pasting implementation in
+  `tongguocr/layout/hdc/modeling/roi_heads/mask_head/fcn_mask_head.py`
+  records its Detectron2 origin. Upstream:
+  https://github.com/facebookresearch/detectron2, Apache-2.0.
+- The local midpoint-offset bbox coder records its OpenMMLab and
+  OBBDetection origin. Upstream: https://github.com/jbwang1997/OBBDetection,
+  Apache-2.0; Copyright 2018-2019 Open-MMLab. The attribution remains in
+  `tongguocr/layout/hdc/modeling/rpn/bbox_coder.py`.
+
+These code notices are separate from the model-weight license declarations.
+The Apache-2.0 text is included in [LICENSE](LICENSE).
+
 ## RO-ED text matcher (Apache-2.0), adapted from OmniDocBench
 
 `evaluation/ro_ed/{matching,normalize,reading_order}.py` retain and adapt the
@@ -48,9 +72,19 @@ code is copied verbatim.
 
 ## Model weights and datasets
 
-- Model weights are **not** distributed in this repository. They are
-  distributed separately via Hugging Face; the license for the weights is
-  stated on the model repository.
+- Model weights are **not** distributed in this code repository. They are
+  hosted separately on [Hugging Face](https://huggingface.co/jzzh2004/TongGuOCR)
+  and [ModelScope International](https://modelscope.ai/models/jzzh2004/TongGuOCR).
+- TongGuOCR's own OCR adaptations, detection checkpoint and documentation
+  are distributed under Apache-2.0, as selected by the model owner. This
+  grant covers rights controlled by the TongGuOCR contributors and does
+  not replace applicable third-party terms. The
+  GLM-OCR base-model weights retain MIT terms. See
+  [GLM-OCR model license and provenance](THIRD_PARTY_LICENSES/GLM-OCR-MIT.md).
+  The upstream SDK's Apache-2.0 license is separate from the model license.
+- `layout/finetune_infer.pth` is the HDC text-line detection checkpoint,
+  distributed under [Apache-2.0](LICENSE) as selected by the model owner.
+  Its license is declared separately from the GLM-OCR base-model license.
 - The M5HisDoc and MTHv2 evaluation datasets are **not** redistributed.
   Users must obtain the datasets from their respective owners
   (see `evaluation/README.md` for the expected directory layout).

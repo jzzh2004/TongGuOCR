@@ -8,7 +8,8 @@
   [Paper](https://arxiv.org/abs/2608.07917) ·
   [Project Page](https://jzzh2004.github.io/TongGuOCR) ·
   [Online Demo](https://guji-ocr.com) ·
-  [Weights](https://huggingface.co/jzzh2004/TongGuOCR)
+  [Hugging Face](https://huggingface.co/jzzh2004/TongGuOCR) ·
+  [ModelScope International](https://modelscope.ai/models/jzzh2004/TongGuOCR)
 
   English · [简体中文](README.zh-CN.md)
 </div>
@@ -73,15 +74,31 @@ bash tools/setup_env.sh
 conda activate tongguocr
 ```
 
-Place the OCR model in `weights/ocr/` and the detector checkpoint at
-`weights/layout/finetune_infer.pth`. The Hugging Face weight URL is a
-placeholder until publication; `tools/download_weights.sh` will download
-from that repository once the weights are available.
+Download the final Stage 3 weights from
+[Hugging Face](https://huggingface.co/jzzh2004/TongGuOCR):
+
+```bash
+bash tools/download_weights.sh huggingface
+```
+
+If Hugging Face is unreachable, use
+[ModelScope International](https://modelscope.ai/models/jzzh2004/TongGuOCR):
+
+```bash
+python -m pip install modelscope
+bash tools/download_weights.sh modelscope
+```
+
+The ModelScope repository is on `modelscope.ai`, not `modelscope.cn`.
+While a repository is private, access requires an authorized account:
+set `HF_TOKEN` for Hugging Face or `MODELSCOPE_API_TOKEN` for ModelScope
+International. The script places the seven OCR files in `weights/ocr/`
+and the detector at `weights/layout/finetune_infer.pth`. Local copies can
+also be placed at these paths.
 
 The detector uses a compiled `mmcv-full` extension. Setup uses a compatible
 wheel from `wheels/`, or builds it with the local CUDA toolkit. A source
-build can take several minutes. For a package mirror, set `PIP_INDEX`;
-for a weight mirror, set `HF_ENDPOINT`.
+build can take several minutes. For a Python package mirror, set `PIP_INDEX`.
 
 ## Recognition
 
@@ -144,5 +161,6 @@ or a CPU environment. Dataset formats and metric definitions are in
 
 ## License
 
-Code: [Apache-2.0](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md)
-for attribution. Model weights have the license stated on their model page.
+Code, TongGuOCR's own OCR adaptations, and the detection checkpoint:
+[Apache-2.0](LICENSE). The GLM-OCR base model retains MIT terms. See
+[third-party notices](THIRD_PARTY_NOTICES.md) for license scope and attribution.

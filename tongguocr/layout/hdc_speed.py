@@ -1,5 +1,4 @@
-# model settings
-checkpoint = './weights/layout/hornet_tiny_gf.pth'  # noqa
+# Inference loads the complete detector checkpoint; no backbone checkpoint is needed.
 angle_version = 'le90'
 model = dict(
     type='HDCDetector_Infer',
@@ -7,7 +6,7 @@ model = dict(
     backbone=dict(out_indices=(0, 1, 2, 3),
                   num_stages=4,
                   drop_path_rate=0.2,
-                  init_cfg=dict(type='Pretrained', checkpoint=checkpoint)),
+                  init_cfg=None),
     neck=dict(in_channels=[64, 128, 256, 512], out_channels=256, num_outs=5),
     rpn_head=dict(
         in_channels=256,
