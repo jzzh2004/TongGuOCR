@@ -5,11 +5,12 @@
 
   **面向中文历史文献的版面感知·词元增强 OCR 多模态大模型**
 
-  [论文](https://arxiv.org/abs/2608.07917) ·
-  [项目主页](https://jzzh2004.github.io/TongGuOCR) ·
-  [在线演示](https://guji-ocr.com) ·
-  [Hugging Face](https://huggingface.co/jzzh2004/TongGuOCR) ·
-  [ModelScope 国际站](https://modelscope.ai/models/jzzh2004/TongGuOCR)
+  [![论文](https://img.shields.io/badge/arXiv-2608.07917-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2608.07917)
+  [![项目主页](https://img.shields.io/badge/Project-Page-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white)](https://jzzh2004.github.io/TongGuOCR)
+  [![在线演示](https://img.shields.io/badge/Online-Demo-F97316?style=for-the-badge&logo=gradio&logoColor=white)](https://guji-ocr.com)
+
+  [![Hugging Face](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=1F2937)](https://huggingface.co/jzzh2004/TongGuOCR)
+  [![ModelScope 国际站](https://img.shields.io/badge/ModelScope-624AFF?style=for-the-badge&logo=modelscope&logoColor=white)](https://modelscope.ai/models/jzzh2004/TongGuOCR)
 
   [English](README.md) · 简体中文
 </div>

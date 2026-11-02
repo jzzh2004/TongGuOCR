@@ -5,11 +5,12 @@
 
   **A Layout-Aware and Token-Augmented OCR MLLM for Chinese Historical Documents**
 
-  [Paper](https://arxiv.org/abs/2608.07917) ·
-  [Project Page](https://jzzh2004.github.io/TongGuOCR) ·
-  [Online Demo](https://guji-ocr.com) ·
-  [Hugging Face](https://huggingface.co/jzzh2004/TongGuOCR) ·
-  [ModelScope International](https://modelscope.ai/models/jzzh2004/TongGuOCR)
+  [![Paper](https://img.shields.io/badge/arXiv-2608.07917-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2608.07917)
+  [![Project Page](https://img.shields.io/badge/Project-Page-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white)](https://jzzh2004.github.io/TongGuOCR)
+  [![Online Demo](https://img.shields.io/badge/Online-Demo-F97316?style=for-the-badge&logo=gradio&logoColor=white)](https://guji-ocr.com)
+
+  [![Hugging Face](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=1F2937)](https://huggingface.co/jzzh2004/TongGuOCR)
+  [![ModelScope International](https://img.shields.io/badge/ModelScope-624AFF?style=for-the-badge&logo=modelscope&logoColor=white)](https://modelscope.ai/models/jzzh2004/TongGuOCR)
 
   English · [简体中文](README.zh-CN.md)
 </div>
